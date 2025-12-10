@@ -1,0 +1,41 @@
+// src/utils/PitchUtils.js
+import { Dimensions } from 'react-native';
+import { GRID_CELL_SIZE } from '../constants/GameConstants';
+
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window'); 
+const DRAWER_WIDTH = SCREEN_WIDTH; 
+
+/**
+ * 輔助函數: 將螢幕座標轉換為 1-9 號位
+ */
+export const getCellNumber = (absoluteX, absoluteY, gridLayout) => {
+    if (!gridLayout || gridLayout.width === 0) {
+        return { cellNumber: 0, isInside: false, relX: 0, relY: 0 }; 
+    }
+
+    const relX = absoluteX - gridLayout.x;
+    const relY = absoluteY - gridLayout.y;
+    
+    const isInside = (relX >= 0 && relX < gridLayout.width && relY >= 0 && relY < gridLayout.height);
+
+    let cellNumber = 0;
+    
+    if (isInside) {
+        const cellWidth = gridLayout.width / GRID_CELL_SIZE;
+        const cellHeight = gridLayout.height / GRID_CELL_SIZE;
+
+        const col = Math.floor(relX / cellWidth); 
+        const row = Math.floor(relY / cellHeight); 
+
+        cellNumber = (row * GRID_CELL_SIZE) + col + 1;
+    }
+    
+    return { 
+        cellNumber, 
+        isInside,
+        relX: relX / gridLayout.width, 
+        relY: relY / gridLayout.height
+    };
+};
+
+export { SCREEN_WIDTH, SCREEN_HEIGHT, DRAWER_WIDTH };
