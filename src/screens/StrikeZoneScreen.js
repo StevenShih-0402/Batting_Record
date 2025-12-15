@@ -44,10 +44,10 @@ const StrikeZoneScreen = () => {
         gridY: 0,
         isInside: false,
     });
-    const [gridLayout, setGridLayout] = useState(null); 
+    const [gridLayout, setGridLayout] = useState(null);         // 位置資訊的狀態變數
     const [pitchZoneHeight, setPitchZoneHeight] = useState(0); 
     
-    const gridRef = useRef(null);
+    const gridRef = useRef(null);                               // 用來收集位置資訊，並向下傳遞給子元件的變數，通稱"引用" (ref)
 
     // --- 抽屜狀態與動畫 ---
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -97,6 +97,8 @@ const StrikeZoneScreen = () => {
     ).current;
     
     // 處理九宮格佈局測量
+    // 1, 當九宮格 View 在畫面上確定位置和大小後，onLayout 事件被觸發。
+    // 2, handleLayout 函式接收到 event 數據，並從中提取 x, y, width, height 資訊。
     const handleGridLayout = useCallback(() => {
         if (gridRef.current) {
             gridRef.current.measure((fx, fy, width, height, px, py) => {
@@ -234,7 +236,7 @@ const StrikeZoneScreen = () => {
 
                     {/* 九宮格 (置中) */}
                     <View style={styles.gridOverlay}>
-                        <PitchGrid ref={gridRef} onLayout={handleGridLayout} theme={theme} />
+                        <PitchGrid ref={gridRef} onLayout={handleGridLayout} />
                     </View>
                         
                 </View>

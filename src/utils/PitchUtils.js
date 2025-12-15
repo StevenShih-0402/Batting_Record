@@ -13,6 +13,8 @@ export const getCellNumber = (absoluteX, absoluteY, gridLayout) => {
         return { cellNumber: 0, isInside: false, relX: 0, relY: 0 }; 
     }
 
+    // 當使用者點擊畫面時，獲得的是螢幕絕對座標 (absoluteX, absoluteY)。
+    // 必須使用 gridLayout (九宮格位置資訊) 中的 x 和 y (九宮格的起點) 進行減法運算：
     const relX = absoluteX - gridLayout.x;
     const relY = absoluteY - gridLayout.y;
     
