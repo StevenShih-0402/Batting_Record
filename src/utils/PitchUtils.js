@@ -1,9 +1,6 @@
 // src/utils/PitchUtils.js
-import { Dimensions } from 'react-native';
+// 工具函式庫
 import { GRID_CELL_SIZE } from '../constants/GameConstants';
-
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window'); 
-const DRAWER_WIDTH = SCREEN_WIDTH; 
 
 /**
  * 輔助函數: 將螢幕座標轉換為 1-9 號位
@@ -40,4 +37,4 @@ export const getCellNumber = (absoluteX, absoluteY, gridLayout) => {
     };
 };
 
-export { SCREEN_WIDTH, SCREEN_HEIGHT, DRAWER_WIDTH };
+// export { SCREEN_WIDTH, SCREEN_HEIGHT };

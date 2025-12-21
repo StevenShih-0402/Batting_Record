@@ -1,4 +1,5 @@
 // src/components/modals/PitchInputModal.js
+// 輸入逐球紀錄的彈窗
 import React, { useState, useEffect } from 'react';
 import { View, Alert, StyleSheet, TouchableOpacity } from 'react-native';
 import { Text, useTheme, Button, Modal, Portal, TextInput } from 'react-native-paper';

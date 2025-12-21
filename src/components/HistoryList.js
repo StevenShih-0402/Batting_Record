@@ -1,4 +1,5 @@
 // src/components/HistoryList.js
+// 顯示逐球紀錄的側邊選單紀錄列
 import React from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
@@ -21,6 +22,7 @@ const HistoryList = ({ records = [], onDelete }) => {
     
     return (
         <View style={styles.container}>
+            {/* 將 records 陣列裡的每一筆資料轉換成一個 <View>（紀錄列）。 */}
             {records.map((record, index) => {
                 const finalOutcome = record.atBatEndOutcome;
                 const displayResult = finalOutcome === '三振' || finalOutcome === '保送' ? finalOutcome : record.result;
@@ -39,7 +41,7 @@ const HistoryList = ({ records = [], onDelete }) => {
 
                         <View style={styles.recordContent}>
                             <Text style={[styles.recordResult, {color: itemColor}]}>
-                                {displayResult} {finalOutcome === '打擊出去' && ' (結束打席)'}
+                                {displayResult} {finalOutcome === '打擊出去'}
                             </Text>
                             <Text style={styles.recordDetails}> 
                                 {record.pitchType} | {typeof record.speed === 'number' && record.speed > 0 ? `${record.speed.toFixed(1)} km/h ` : ''} 

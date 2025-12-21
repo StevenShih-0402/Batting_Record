@@ -1,4 +1,5 @@
 // src/screens/StrikeZoneScreen.js
+// 打席數據輸入的介面
 import React, { useState, useCallback, useRef } from 'react'; 
 import { View, Alert, StyleSheet, ActivityIndicator, ScrollView, TouchableOpacity, Animated, PanResponder } from 'react-native'; 
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -7,8 +8,9 @@ import { Feather as Icon } from '@expo/vector-icons';
 
 // 導入 Hook 與工具
 import useAtBatRecords from '../hooks/useAtBatRecords';
-import { getCellNumber, SCREEN_WIDTH, SCREEN_HEIGHT, DRAWER_WIDTH } from '../utils/PitchUtils';
+import { getCellNumber } from '../utils/PitchUtils';
 import { getColorByResult } from '../constants/Colors';
+import { Layout } from '../constants/Layout';
 
 // 導入組件
 import PitchGrid from '../components/common/PitchGrid';
@@ -19,8 +21,8 @@ import EndAtBatModal from '../components/modals/EndAtBatModal';
 
 
 const StrikeZoneScreen = () => {
-    const theme = useTheme();
-    const insets = useSafeAreaInsets(); 
+    const theme = useTheme();               // 取得自訂主題實體
+    const insets = useSafeAreaInsets();     // 取得 SaveAreaView 裡面的事件設定實體
     
     // 使用 Custom Hook 獲取所有資料和持久化邏輯
     const { 
@@ -35,6 +37,7 @@ const StrikeZoneScreen = () => {
     // 用於 Modal 內部 loading 狀態
     const [isSaving, setIsSaving] = useState(false); 
     
+    // 儲存與設定 Modal 的數據
     const [isPitchModalVisible, setIsPitchModalVisible] = useState(false); 
     const [isEndModalVisible, setIsEndModalVisible] = useState(false); 
     
@@ -51,10 +54,10 @@ const StrikeZoneScreen = () => {
 
     // --- 抽屜狀態與動畫 ---
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-    const slideAnim = useRef(new Animated.Value(SCREEN_WIDTH)).current; 
+    const slideAnim = useRef(new Animated.Value(Layout.WINDOW.WIDTH)).current; 
     
     const toggleDrawer = useCallback(() => {
-        const targetValue = isDrawerOpen ? SCREEN_WIDTH : 0; 
+        const targetValue = isDrawerOpen ? Layout.WINDOW.WIDTH : 0; 
         
         Animated.timing(slideAnim, {
             toValue: targetValue,
@@ -76,12 +79,12 @@ const StrikeZoneScreen = () => {
                 slideAnim.setValue(newX);
             },
             onPanResponderRelease: (evt, gestureState) => {
-                const swipeThreshold = 0.3 * DRAWER_WIDTH; 
+                const swipeThreshold = 0.3 * Layout.DRAWER_WIDTH; 
                 const swipeSpeedThreshold = 0.5; 
 
                 if (gestureState.dx > swipeThreshold || gestureState.vx > swipeSpeedThreshold) {
                     Animated.timing(slideAnim, {
-                        toValue: SCREEN_WIDTH,
+                        toValue: Layout.WINDOW.WIDTH,
                         duration: 250,
                         useNativeDriver: true,
                     }).start(() => setIsDrawerOpen(false));
@@ -134,7 +137,8 @@ const StrikeZoneScreen = () => {
             setIsPitchModalVisible(true); 
         }
     }, [gridLayout, atBatStatus]);
-      
+    
+    // 關閉 PitchInputModal
     const handlePitchModalClose = useCallback(() => {
         setIsPitchModalVisible(false); 
     }, []);
@@ -152,14 +156,14 @@ const StrikeZoneScreen = () => {
         }
     }, [handleSavePitch, handlePitchModalClose]);
 
-    // 渲染歷史紀錄點
+    // 將歷史紀錄的每一筆資料渲染成九宮格上的球
     const renderHistoryDots = () => {
         if (!pitchZoneHeight || !gridLayout) return null;
 
-        const gridW = SCREEN_WIDTH * 0.7;
+        const gridW = Layout.WINDOW.WIDTH * 0.7;
         const gridH = gridW * (4/3);
 
-        const offsetX = (SCREEN_WIDTH - gridW) / 2;
+        const offsetX = (Layout.WINDOW.WIDTH - gridW) / 2;
         const offsetY = (pitchZoneHeight - gridH) / 2; 
 
         return atBatRecords.map((record, index) => {
@@ -269,12 +273,12 @@ const StrikeZoneScreen = () => {
                 style={[
                     styles.drawerContainer,
                     { 
-                        width: DRAWER_WIDTH, 
+                        width: Layout.DRAWER_WIDTH, 
                         backgroundColor: theme.colors.surfaceVariant,
                         transform: [{ translateX: slideAnim }],
                         top: insets.top,
                         bottom: insets.bottom,
-                        height: SCREEN_HEIGHT - insets.top - insets.bottom,
+                        height: Layout.WINDOW.HEIGHT - insets.top - insets.bottom,
                     }
                 ]}
                 pointerEvents={isDrawerOpen ? 'auto' : 'none'}

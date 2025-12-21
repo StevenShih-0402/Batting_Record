@@ -1,4 +1,5 @@
 // src/components/modals/EndAtBatModal.js
+// 儲存打席紀錄的彈窗
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Text, useTheme, Button, Modal, Portal, TextInput } from 'react-native-paper';
@@ -57,18 +58,18 @@ const EndAtBatModal = ({ isVisible, onClose, onSave, atBatRecords }) => {
                     </TouchableOpacity>
                 </View>
                 
-                <Text style={{marginBottom: 10}}>當前球數: B {atBatRecords.length > 0 ? atBatRecords[0].runningBalls : 0}, S {atBatRecords.length > 0 ? atBatRecords[0].runningStrikes : 0}</Text>
+                <Text style={{marginBottom: 10}}>當前球數: {atBatRecords.length > 0 ? atBatRecords[0].runningStrikes : 0} 好 {atBatRecords.length > 0 ? atBatRecords[0].runningBalls : 0} 壞</Text>
                 
                 <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>主觀描述/備註</Text>
+                    <Text style={styles.inputLabel}>備註:</Text>
                     <TextInput
                         mode="outlined"
                         value={summaryNote}
                         onChangeText={setSummaryNote}
-                        placeholder="Ex: 三振出局 (外角低滑球揮棒落空)"
+                        label="主觀描述，Ex: 一壘軟弱滾地球"
                         multiline
                         numberOfLines={4}
-                        style={{ minHeight: 100 }}
+                        style={{ minHeight: 150 }}
                     />
                 </View>
 

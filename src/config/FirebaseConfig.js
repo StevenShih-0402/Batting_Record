@@ -1,4 +1,5 @@
 // src/config/FirebaseConfig.js
+// Firebase 的帳戶資訊與 Token
 
 // **透過 process.env 讀取帶有 EXPO_PUBLIC_ 前綴的變數**
 const APP_ID = process.env.EXPO_PUBLIC_APP_ID;

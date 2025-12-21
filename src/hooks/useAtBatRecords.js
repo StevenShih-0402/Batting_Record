@@ -1,15 +1,17 @@
 // src/hooks/useAtBatRecords.js
+// 核心業務邏輯 (重要!)
 import { useState, useEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth'; 
 import { firebaseStatus, initAuthAndGetRecords, savePitchRecord, deletePitchRecord, saveAtBatSummaryAndClearRecords } from '../services/firebaseService';
 import { Alert } from 'react-native';
 
 const useAtBatRecords = () => {
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true); 
-    const [rawRecords, setRawRecords] = useState([]);
-    const [atBatRecords, setAtBatRecords] = useState([]); 
-    const [atBatStatus, setAtBatStatus] = useState({ 
+    // 1. 狀態管理：定義 App 運作所需的關鍵數據
+    const [user, setUser] = useState(null);                     // 記錄目前是誰在操作（包含匿名登入資訊）。
+    const [loading, setLoading] = useState(true);               // 追蹤資料是否還在傳輸中，避免在資料還沒準備好時，執行需要資料的運算。
+    const [rawRecords, setRawRecords] = useState([]);           // 直接從 Firebase 拿到的「原始資料」。
+    const [atBatRecords, setAtBatRecords] = useState([]);       // 經過處理、計算過 B/S 球數後的「顯示用資料」。
+    const [atBatStatus, setAtBatStatus] = useState({            // 紀錄目前打席的總結（幾好幾壞、打席是否結束）。
         balls: 0, 
         strikes: 0, 
         isFinished: false,
@@ -17,7 +19,8 @@ const useAtBatRecords = () => {
         atBatRecordsCount: 0,
     });
     
-    // Auth listener: 監聽用戶狀態
+    // 2. Auth listener: 監聽用戶狀態，確保 App 的資料永遠是最新的
+    // 2.1. 身分監聽：透過 onAuthStateChanged 監控使用者是否登入。
     useEffect(() => {
         if (!firebaseStatus.isReady) {
              setLoading(false); 
@@ -32,7 +35,8 @@ const useAtBatRecords = () => {
     }, []);
 
 
-    // Data listener: 監聽 Firestore 資料 & 處理登入 (已修正邏輯)
+    // 2.2. Firestore 監聽：當使用者身分確認後，它會呼叫 initAuthAndGetRecords。
+    // 這是一個「即時連線」，只要資料庫一有變動（例如另一台手機新增了紀錄），你的 App 畫面會自動更新，不需要重新整理。
     useEffect(() => {
         // 如果 Firebase 服務未準備好，則跳過，讓上面的 useEffect 處理 loading 狀態。
         if (!firebaseStatus.isReady) return; 
@@ -45,7 +49,9 @@ const useAtBatRecords = () => {
         
     }, [user]); // 依賴 user 狀態，確保登入完成後會重新執行，並將 user 傳入 initAuthAndGetRecords。
     
-    // B/S Calculation Logic: 根據 rawRecords 計算球數狀態
+    // 3. 棒球球數規則計算邏輯
+    // 資料庫只存了「這球是好球」，它並不存「這球是第幾個好球」。
+    // 因此這個 Hook 幫你把這些邏輯算好，並產出 runningBalls 和 runningStrikes 給畫面顯示。
     useEffect(() => {
         if (loading) return;
         
@@ -121,7 +127,8 @@ const useAtBatRecords = () => {
 
     }, [rawRecords, loading]);
     
-    // Handlers for persistence (保持不變)
+    // 4. 資料庫操作介面 (Database Handlers)，提供了三個簡單的函數給介面（UI）使用
+    // 4.1. 把新的一球丟進資料庫。
     const handleSavePitch = async (data) => {
         try {
             await savePitchRecord(data, user);
@@ -131,6 +138,7 @@ const useAtBatRecords = () => {
         }
     };
     
+    // 4.2. 從資料庫刪除錯誤的紀錄。
     const handleDeletePitch = async (id) => {
         try {
             await deletePitchRecord(id);
@@ -139,6 +147,7 @@ const useAtBatRecords = () => {
         }
     };
 
+    // 4.3. 當打席結束，點擊「儲存紀錄」時，把這組球數打包存入「彙整表」並清空當前畫面。
     const handleSaveSummary = async (summaryData) => {
         try {
             const currentRecordsAscending = [...atBatRecords].reverse();

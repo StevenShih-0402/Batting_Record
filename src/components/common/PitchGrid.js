@@ -4,7 +4,7 @@ import React, { forwardRef } from 'react';
 import { View } from 'react-native';
 import { useTheme } from 'react-native-paper'; // 導入 useTheme
 import { GRID_CELL_SIZE } from '../../constants/GameConstants';
-import { SCREEN_WIDTH } from '../../utils/PitchUtils';
+import { Layout } from '../../constants/Layout';
 
 /*
 input:
@@ -19,8 +19,8 @@ const PitchGrid = forwardRef(({ onLayout }, ref) => {
     
     // 九宮格的外部框線
     const gridStyle = {
-        width: SCREEN_WIDTH * 0.7, 
-        height: SCREEN_WIDTH * 0.7 * (4/3), 
+        width: Layout.WINDOW.WIDTH * 0.7, 
+        height: Layout.WINDOW.WIDTH * 0.7 * (4/3), 
         borderWidth: 1,
         borderColor: theme.colors.outline || 'white',       // 使用主題的輪廓色 (Outline) 作為邊框
     };

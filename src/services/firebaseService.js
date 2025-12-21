@@ -1,4 +1,5 @@
 // src/services/firebaseService.js
+// 處理 Firebase 的 CRUD 與其他連線互動
 import { initializeApp } from 'firebase/app';
 import { 
   getFirestore,
@@ -25,6 +26,7 @@ import { Alert } from 'react-native';
 
 let firebaseApp, auth, db;
 
+// 1. 初始化 App 與 Firebase 伺服器之間的連線
 try {
     firebaseApp = initializeApp(firebaseConfig);
     auth = initializeAuth(firebaseApp, {
@@ -33,26 +35,32 @@ try {
     db = getFirestore(firebaseApp);
 } catch (e) {
     console.error("Firebase Initialization Error:", e.message);
-    // 提供假的物件以防程式崩潰
+    // 連線失敗或錯誤時，提供假的物件以防程式崩潰
     auth = { onAuthStateChanged: (cb) => { console.warn("Auth failed."); cb(null); return () => {}; }, currentUser: null, app: null };
     db = { app: null }; 
 }
 
+// 2. 回傳初始化判斷情形
+// 例如：當 useAtBatRecords 或畫面載入時，如果檢查 firebaseStatus.isReady 是 false，表示初始化失敗，就要顯示「網路連線失敗」或「伺服器維護中」，避免程式去讀取不存在的資料而報錯。
 export const firebaseStatus = {
-    isReady: !!db.app,
-    auth: auth,
-    db: db,
-    PITCH_RECORDS_PATH,
-    AT_BAT_SUMMARY_PATH,
+    isReady: !!db.app,                  // 以 db.app 是否存在，判斷初始化是否成功 (!! 在 JavaScript 可以把任何東西轉換成布林值)。 
+    auth: auth,                         // 統一的連線實體，可以用在其他需要判斷使用者登入的地方
+    db: db,                             // Firestore 的實體
+    PITCH_RECORDS_PATH,                 // 儲存逐球紀錄的路徑
+    AT_BAT_SUMMARY_PATH,                // 儲存統整後打席完整記錄的路徑
 };
 
-
+// 3. 定義與資料庫互動的函式
+// 3.1. 檢查連線使用者的身分，與即時抓取資料
 export const initAuthAndGetRecords = (setRecordsCallback, setLoadingCallback, user) => {
+    
+    // 若初始化未完成，回傳等待的 callback
     if (!firebaseStatus.isReady) {
         setLoadingCallback(false);
         return () => {};
     }
 
+    // 如果發現還沒登入 (!user)，它會自動發動匿名登入，確保你有權限讀寫。
     const handleAuth = async () => {
          try {
             const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
@@ -68,8 +76,7 @@ export const initAuthAndGetRecords = (setRecordsCallback, setLoadingCallback, us
     };
     
     // Auth Listener 在 Hook 中處理
-
-    // 設置 Pitch Records 的即時監聽
+    // 只要雲端資料庫一變動（例如別台手機存入一球），它會立刻被觸發，並透過 setRecordsCallback 把最新的列表回傳給 Hook。
     const q = query(collection(db, PITCH_RECORDS_PATH));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -93,15 +100,19 @@ export const initAuthAndGetRecords = (setRecordsCallback, setLoadingCallback, us
          handleAuth();
     }
     
+    // 當你離開這個畫面時，React 會執行它來關閉連線，避免浪費網路流量。
     return unsubscribe;
 };
 
-
+// 3.2. 新增單次投球紀錄，按下「好球」、「壞球」或「打擊出去」時，會呼叫這個函式。
 export const savePitchRecord = async (data, user) => {
+    
+    // 檢查 user 是否存在以及初始化是否成功，否則不准寫入
     if (!user || !firebaseStatus.isReady) {
         throw new Error("Database or User not ready.");
     }
     
+    // 寫入集合，並加上資料的新增者與新增時間
     await addDoc(collection(db, PITCH_RECORDS_PATH), {
         ...data,
         userId: user.uid,
@@ -109,6 +120,7 @@ export const savePitchRecord = async (data, user) => {
     });
 };
 
+// 3.3. 刪除單次紀錄 
 export const deletePitchRecord = async (id) => {
     if (!firebaseStatus.isReady) {
         throw new Error("Database not ready.");
@@ -116,12 +128,14 @@ export const deletePitchRecord = async (id) => {
     await deleteDoc(doc(db, PITCH_RECORDS_PATH, id));
 };
 
+// 4. 按下「結束打席」的時候彙整打席紀錄
+// 保證了原子性 (Atomicity)。確保「存好總結」跟「清空畫面」這兩件事是一體發生的，不會出現總結存了但畫面沒清空的混亂狀況。
 export const saveAtBatSummaryAndClearRecords = async (summaryData, user, currentRecordsAscending) => {
     if (!user || !firebaseStatus.isReady) {
         throw new Error("Database or User not ready.");
     }
 
-    // 1. 寫入彙整紀錄
+    // 1. 寫入彙整紀錄 (存檔)
     // **已修正：確保 startAt 的值為 Date 物件或 null，避免傳入 undefined**
     const startAtValue = (currentRecordsAscending.length > 0 && currentRecordsAscending[0].createdAt) 
         ? currentRecordsAscending[0].createdAt 
@@ -134,7 +148,7 @@ export const saveAtBatSummaryAndClearRecords = async (summaryData, user, current
         endAt: serverTimestamp(),
     });
 
-    // 2. 批量刪除所有 pitch_records
+    // 2. 批量刪除所有 pitch_records (清空)
     const q = query(collection(db, PITCH_RECORDS_PATH));
     const snapshot = await getDocs(q);
     const batch = writeBatch(db);
