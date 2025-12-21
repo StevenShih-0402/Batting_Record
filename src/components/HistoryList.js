@@ -13,7 +13,7 @@ const HistoryList = ({ records = [], onDelete }) => {
     if (records.length === 0) { 
         return (
             <View style={styles.container}>
-                <Text style={[styles.emptyText, { color: theme.colors.onSurfaceVariant }]}>
+                <Text style={[styles.emptyText, { color: theme.colors.onSurface }]}>
                     尚無打席紀錄。
                 </Text>
             </View>
@@ -29,7 +29,7 @@ const HistoryList = ({ records = [], onDelete }) => {
                 const itemColor = getColorByResult(record.result, finalOutcome);
                 
                 return (
-                    <View key={record.id} style={[styles.recordItem, { borderBottomColor: theme.colors.outline }]}>
+                    <View key={record.id} style={[styles.recordItem, {backgroundColor: theme.colors.surfaceVariant }, { borderBottomColor: theme.colors.outline }]}>
                         <View style={[
                             styles.pitchIndexCircle, 
                             { backgroundColor: itemColor } 
@@ -43,7 +43,7 @@ const HistoryList = ({ records = [], onDelete }) => {
                             <Text style={[styles.recordResult, {color: itemColor}]}>
                                 {displayResult} {finalOutcome === '打擊出去'}
                             </Text>
-                            <Text style={styles.recordDetails}> 
+                            <Text style={[styles.recordDetails, { color: theme.colors.onSurface }]}> 
                                 {record.pitchType} | {typeof record.speed === 'number' && record.speed > 0 ? `${record.speed.toFixed(1)} km/h ` : ''} 
                                 {record.note ? `\n備註: ${record.note}` : ''}
                             </Text>
@@ -51,7 +51,7 @@ const HistoryList = ({ records = [], onDelete }) => {
 
                         <View style={styles.recordCount}>
                             {finalOutcome ? (
-                                 <Text style={[styles.recordCountText, {color: theme.colors.error, fontSize: 14, fontWeight: 'bold'}]}>
+                                 <Text style={[styles.recordCountText, {color: theme.colors.error }]}>
                                     已結束
                                 </Text>
                             ) : (
@@ -106,7 +106,6 @@ const styles = StyleSheet.create({
     },
     recordDetails: {
         fontSize: 12,
-        color: '#666',
         marginTop: 2,
     },
     recordCount: {

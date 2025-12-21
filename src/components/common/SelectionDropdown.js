@@ -54,7 +54,7 @@ const SelectionDropdown = ({ label, selectedValue, options, onSelect, disabled =
                 contentStyle={styles.dropdownContent}
             >
                 {/* 使用者已選擇的內容區塊 */}
-                <View style={styles.customDropdownContentInner}>
+                <View style={[styles.customDropdownContentInner, { backgroundColor: theme.colors.primary }]}>
                     <Text style={[styles.dropdownText, {
                         color: theme.colors.onSurface,
                     }]}>
@@ -83,9 +83,13 @@ const SelectionDropdown = ({ label, selectedValue, options, onSelect, disabled =
                             <TouchableOpacity 
                                 key={value} 
                                 onPress={() => handleSelect(value)}
-                                style={[styles.dropdownItem, { backgroundColor: selectedValue === value ? theme.colors.primaryContainer : theme.colors.surface }]}
+                                style={[
+                                    styles.dropdownItem, 
+                                    { backgroundColor: selectedValue === value ? theme.colors.primary : theme.colors.surface },
+                                    { borderBottomColor: theme.colors.onSurface}
+                                ]}
                             >
-                                <Text style={{ color: selectedValue === value ? theme.colors.onPrimaryContainer : theme.colors.onSurface }}>{value}</Text>
+                                <Text style={{ color: selectedValue === value ? theme.colors.onPrimary : theme.colors.onSurface }}>{value}</Text>
                             </TouchableOpacity>
                         ))}
                     </ScrollView>
@@ -126,7 +130,6 @@ const styles = StyleSheet.create({
         marginTop: -4,
     },
     dropdownModalInner: {
-        // backgroundColor: theme.colors.surface,
         padding: 10,
         margin: 40,
         borderRadius: 8,
@@ -137,7 +140,6 @@ const styles = StyleSheet.create({
     dropdownItem: {
         padding: 15,
         borderBottomWidth: 1,
-        borderBottomColor: '#eee',
     }
 });
 

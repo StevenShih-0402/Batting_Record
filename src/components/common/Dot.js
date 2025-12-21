@@ -26,7 +26,7 @@ const Dot = ({ x, y, color, pitchIndex }) => {
         backgroundColor: color, 
         
         // 主題相關樣式
-        borderColor: theme.colors.surface,
+        borderColor: theme.colors.onSurfaceVariant,
     };
     
     // 文字樣式也使用主題顏色
@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
     },
     text: {
         // 文字的靜態屬性
-        fontSize: 10, 
+        fontSize: 14, 
         fontWeight: 'bold',
     },
 });

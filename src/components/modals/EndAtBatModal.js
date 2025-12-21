@@ -50,7 +50,7 @@ const EndAtBatModal = ({ isVisible, onClose, onSave, atBatRecords }) => {
 
     return (
         <Portal>
-            <Modal visible={isVisible} onDismiss={onClose} contentContainerStyle={styles.modalContainer}>
+            <Modal visible={isVisible} onDismiss={onClose} contentContainerStyle={[styles.modalContainer, {backgroundColor: theme.colors.surface}]}>
                 <View style={styles.modalHeader}>
                     <Text style={[styles.modalTitle, { color: theme.colors.primary }]}>儲存打席紀錄</Text>
                     <TouchableOpacity onPress={onClose} style={{padding: 5}}>

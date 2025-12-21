@@ -1,9 +1,9 @@
 // src/constants/Colors.js
 // 管理"變動性低，傳達資訊的顏色"。
-const COLOR_STRIKE = '#FFC300'; 
-const COLOR_BALL = '#38A3A5';   
-const COLOR_OTHER = '#3498DB';  
-const COLOR_FOUL = '#A9A9A9';
+const COLOR_STRIKE = '#FFD600'; 
+const COLOR_BALL = '#00E676';   
+const COLOR_OTHER = '#3eb2ffff';  
+const COLOR_FOUL = '#d7d5d5ff';
 
 export {
     COLOR_STRIKE,

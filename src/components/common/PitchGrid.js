@@ -21,8 +21,8 @@ const PitchGrid = forwardRef(({ onLayout }, ref) => {
     const gridStyle = {
         width: Layout.WINDOW.WIDTH * 0.7, 
         height: Layout.WINDOW.WIDTH * 0.7 * (4/3), 
-        borderWidth: 1,
-        borderColor: theme.colors.outline || 'white',       // 使用主題的輪廓色 (Outline) 作為邊框
+        borderWidth: 2,
+        borderColor: theme.colors.outline,           // 使用主題的輪廓色 (Outline) 作為邊框
     };
     
     // 九宮格的內部格線

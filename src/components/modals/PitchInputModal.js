@@ -95,7 +95,7 @@ const PitchInputModal = ({ isVisible, onClose, onSave, cellInfo, atBatStatus, is
 
     return (
         <Portal>
-            <Modal visible={isVisible} onDismiss={onClose} contentContainerStyle={styles.modalContainer}>
+            <Modal visible={isVisible} onDismiss={onClose} contentContainerStyle={[styles.modalContainer, { backgroundColor: theme.colors.surface }]}>
                 <View style={styles.modalHeader}>
                     <Text 
                         style={[styles.modalTitle, { 
@@ -103,10 +103,7 @@ const PitchInputModal = ({ isVisible, onClose, onSave, cellInfo, atBatStatus, is
                             flexShrink: 1 
                         }]}
                     >
-                        {cellInfo.cellNumber > 0 ? `${cellInfo.cellNumber} 號位` : '九宮格外'} 
-                        <Text style={{ fontSize: 14, color: theme.colors.onSurfaceVariant }}>
-                            ({cellInfo.gridX ? cellInfo.gridX.toFixed(2) : 'N/A'}, {cellInfo.gridY ? cellInfo.gridY.toFixed(2) : 'N/A'})
-                        </Text>
+                        {cellInfo.cellNumber > 0 ? `${cellInfo.cellNumber} 號位` : '九宮格外 '} 
                     </Text>
                     <TouchableOpacity onPress={onClose} style={{padding: 5}}>
                         <Icon name="x" size={24} color={theme.colors.onSurface} />
@@ -136,8 +133,7 @@ const PitchInputModal = ({ isVisible, onClose, onSave, cellInfo, atBatStatus, is
                         onChangeText={text => setSpeed(text.replace(/[^0-9.]/g, ''))}
                         keyboardType="numeric"
                         label="km/h"
-                        style={{ width: '50%' }}
-                        right={<TextInput.Affix text="km/h" />}
+                        style={{ width: '33%' }}
                         disabled={atBatStatus.lastResult === '打擊出去'}
                     />
                 </View>
@@ -172,7 +168,6 @@ const PitchInputModal = ({ isVisible, onClose, onSave, cellInfo, atBatStatus, is
 
 const styles = StyleSheet.create({
     modalContainer: {
-        backgroundColor: 'white',
         padding: 20,
         marginHorizontal: 20,
         borderRadius: 10,

@@ -128,6 +128,9 @@ const StrikeZoneScreen = () => {
         if (gridLayout) {
             const { cellNumber, isInside, relX: rx, relY: ry } = getCellNumber(absoluteX, absoluteY, gridLayout);
             
+            // 在 log 輸出點擊的座標位置
+            console.log(`[Pitch Click] ${cellNumber > 0 ? cellNumber + ' 號位' : '框外'}, 座標: (${rx.toFixed(2)}, ${ry.toFixed(2)})`);
+
             setSelectedCellInfo({
                 cellNumber,
                 isInside,
@@ -194,7 +197,7 @@ const StrikeZoneScreen = () => {
     
     return (
         <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right', 'bottom']}>
-            <View style={styles.headerContainer}>
+            <View style={[styles.headerContainer, { backgroundColor: theme.colors.surface }] }>
                 <Text style={[styles.header, { color: theme.colors.primary }]}>
                     <Icon name="activity" size={24} color={theme.colors.primary} />
                     {'  '}打席數據輸入
@@ -203,23 +206,23 @@ const StrikeZoneScreen = () => {
 
             {/* 打席數據區域 */}
             {loading ? (
-                 <View style={styles.loadingContainer}>
+                 <View style={[styles.loadingContainer, {backgroundColor: theme.colors.background}]}>
                     <ActivityIndicator 
                         animating={true} 
                         size="large" 
-                        color={theme.colors.primary} 
+                        color={theme.colors.primary}
                     />
-                    <Text style={{color: "#000000", marginTop: 10}}>資料庫連線中...</Text>
+                    <Text style={{color: theme.colors.onSurface, marginTop: 10}}>資料庫連線中...</Text>
                  </View>
             ) : (
                 <View 
-                    style={[styles.pitchZoneContainer, {backgroundColor: 'black'}]} 
+                    style={[styles.pitchZoneContainer, {backgroundColor: theme.colors.background}]} 
                     onTouchEnd={handleScreenPress}
                     onLayout={(e) => setPitchZoneHeight(e.nativeEvent.layout.height)}
                 >
                     
                     {/* 頂部狀態列：好壞球燈號 */}
-                    <View style={styles.statusBar}>
+                    <View style={[styles.statusBar, { backgroundColor: theme.colors.surfaceVariant }]}>
                         {/* S: 好球燈 (上限 2 個燈，因為第 3 個燈就結束了) */}
                         <View style={styles.indicatorGroup}>
                             <Text style={styles.indicatorLabel}>S</Text>
@@ -287,7 +290,7 @@ const StrikeZoneScreen = () => {
                         { 
                             backgroundColor: theme.colors.primary, 
                             right: 15, 
-                            bottom: 3 + insets.bottom 
+                            bottom: 15 + insets.bottom 
                         } 
                     ]}
                     onPress={toggleDrawer}
@@ -341,7 +344,7 @@ const StrikeZoneScreen = () => {
                     showsVerticalScrollIndicator={true}
                 >
                     
-                    <Text style={[styles.listTitle, { color: theme.colors.onSurface, paddingTop: 16 }]}>當前打席球數 ({atBatRecords.length} 球)</Text>
+                    <Text style={[styles.listTitle, { color: theme.colors.onSurface, paddingTop: 16 }]}>當前打席球數 ( {atBatRecords.length} 球 )</Text>
                     
                     <HistoryList records={atBatRecords} onDelete={handleDeletePitch} />
 
@@ -407,9 +410,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingVertical: 10,
         paddingHorizontal: 16,
-        backgroundColor: '#1A1A1A', // 深色背景讓燈號更明顯
         borderBottomWidth: 1,
-        borderBottomColor: '#333',
     },
     indicatorGroup: {
         flexDirection: 'row',
