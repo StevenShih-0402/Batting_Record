@@ -129,13 +129,13 @@ const PitchInputModal = ({ isVisible, onClose, onSave, cellInfo, atBatStatus, is
                 />
                 
                 <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>球速 (KM/H)</Text>
+                    <Text style={styles.inputLabel}>球速</Text>
                     <TextInput
                         mode="outlined"
                         value={speed}
                         onChangeText={text => setSpeed(text.replace(/[^0-9.]/g, ''))}
                         keyboardType="numeric"
-                        placeholder="可不輸入"
+                        label="km/h"
                         style={{ width: '50%' }}
                         right={<TextInput.Affix text="km/h" />}
                         disabled={atBatStatus.lastResult === '打擊出去'}
@@ -143,12 +143,12 @@ const PitchInputModal = ({ isVisible, onClose, onSave, cellInfo, atBatStatus, is
                 </View>
 
                 <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>備註 (Ex. 觸身球)</Text>
+                    <Text style={styles.inputLabel}>備註</Text>
                     <TextInput
                         mode="outlined"
                         value={note}
                         onChangeText={setNote}
-                        placeholder="輸入細部資訊"
+                        label="輸入細部資訊，Ex. 誤判"
                         multiline
                         numberOfLines={3}
                         style={{ minHeight: 80 }}

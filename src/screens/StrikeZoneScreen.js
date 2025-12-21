@@ -9,7 +9,7 @@ import { Feather as Icon } from '@expo/vector-icons';
 // 導入 Hook 與工具
 import useAtBatRecords from '../hooks/useAtBatRecords';
 import { getCellNumber } from '../utils/PitchUtils';
-import { getColorByResult } from '../constants/Colors';
+import { getColorByResult, COLOR_BALL, COLOR_STRIKE } from '../constants/Colors';
 import { Layout } from '../constants/Layout';
 
 // 導入組件
@@ -18,6 +18,7 @@ import Dot from '../components/common/Dot';
 import HistoryList from '../components/HistoryList';
 import PitchInputModal from '../components/modals/PitchInputModal';
 import EndAtBatModal from '../components/modals/EndAtBatModal';
+import BallIndicator from '../components/common/BallIndicator';
 
 
 const StrikeZoneScreen = () => {
@@ -208,7 +209,7 @@ const StrikeZoneScreen = () => {
                         size="large" 
                         color={theme.colors.primary} 
                     />
-                    <Text style={{color: theme.colors.onSurfaceVariant, marginTop: 10}}>資料庫連線中...</Text>
+                    <Text style={{color: "#000000", marginTop: 10}}>資料庫連線中...</Text>
                  </View>
             ) : (
                 <View 
@@ -217,22 +218,54 @@ const StrikeZoneScreen = () => {
                     onLayout={(e) => setPitchZoneHeight(e.nativeEvent.layout.height)}
                 >
                     
-                    {/* B-S 狀態顯示 */}
-                    <View style={styles.scoreBoard}>
-                        <Text style={[styles.scoreText, { color: theme.colors.onPrimaryContainer, backgroundColor: theme.colors.primaryContainer }]}>
-                            B: {atBatStatus.balls}
-                        </Text>
-                        <Text style={[styles.scoreText, { color: theme.colors.onErrorContainer, backgroundColor: theme.colors.errorContainer }]}>
-                            S: {atBatStatus.strikes}
-                        </Text>
-                        <Text style={[styles.scoreText, { color: theme.colors.onSurfaceVariant }]}>
-                            P: {atBatRecords.length}
-                        </Text>
-                        {atBatStatus.isFinished && (
-                            <Text style={[styles.finishedText, { color: theme.colors.error }]}>
-                                {atBatStatus.balls >= 4 ? '保送' : atBatStatus.strikes >= 3 ? '三振' : '打擊結束'}
-                            </Text>
-                        )}
+                    {/* 頂部狀態列：好壞球燈號 */}
+                    <View style={styles.statusBar}>
+                        {/* S: 好球燈 (上限 2 個燈，因為第 3 個燈就結束了) */}
+                        <View style={styles.indicatorGroup}>
+                            <Text style={styles.indicatorLabel}>S</Text>
+                            <BallIndicator 
+                                count={atBatStatus.strikes} 
+                                max={2} 
+                                activeColor={COLOR_STRIKE} 
+                                inactiveColor="#333" 
+                            />
+                        </View>
+
+                        {/* B: 壞球燈 (上限 3 個燈) */}
+                        <View style={styles.indicatorGroup}>
+                            <Text style={styles.indicatorLabel}>B</Text>
+                            <BallIndicator 
+                                count={atBatStatus.balls} 
+                                max={3} 
+                                activeColor={COLOR_BALL} 
+                                inactiveColor="#333" 
+                            />
+                        </View>
+
+                        {/* P: 總球數 */}
+                        <View style={styles.indicatorGroup}>
+                            <Text style={styles.indicatorLabel}>P</Text>
+                            <Text style={styles.pitchCountText}>{atBatRecords.length}</Text>
+                        </View>
+
+                        {/* 最新紀錄文字 */}
+                        <View style={styles.latestRecordContainer}>
+                            {atBatRecords.length > 0 && (
+                                <Text 
+                                    style={[
+                                        styles.latestRecordText, 
+                                        { color: getColorByResult(atBatRecords[0].result, atBatRecords[0].atBatEndOutcome) }
+                                    ]}
+                                    numberOfLines={1}
+                                >
+                                    {/* 顯示最後一球的結果，若有結算則顯示結算文字 */}
+                                    {atBatStatus.isFinished 
+                                        ? (atBatStatus.balls >= 4 ? '保送' : atBatStatus.strikes >= 3 ? '三振' : '打席結束')
+                                        : atBatRecords[0].result
+                                    }
+                                </Text>
+                            )}
+                        </View>
                     </View>
 
                     {/* 歷史紀錄點 (持久化) */}
@@ -369,32 +402,43 @@ const styles = StyleSheet.create({
         justifyContent: 'center', 
         alignItems: 'center',    
     },
-    scoreBoard: {
-        position: 'absolute',
-        top: 20,
-        left: 20,
+    statusBar: {
         flexDirection: 'row',
-        zIndex: 15,
-        gap: 10,
+        alignItems: 'center',
+        paddingVertical: 10,
+        paddingHorizontal: 16,
+        backgroundColor: '#1A1A1A', // 深色背景讓燈號更明顯
+        borderBottomWidth: 1,
+        borderBottomColor: '#333',
     },
-    scoreText: {
-        fontSize: 22,
-        fontWeight: 'bold',
-        paddingHorizontal: 12,
-        paddingVertical: 5,
-        borderRadius: 8,
-        minWidth: 70,
-        textAlign: 'center',
+    indicatorGroup: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginRight: 10,
     },
-    finishedText: {
-        fontSize: 22,
+    indicatorLabel: {
+        color: '#AAA',
+        fontSize: 12,
         fontWeight: 'bold',
-        paddingHorizontal: 12,
-        paddingVertical: 5,
-        borderRadius: 8,
-        backgroundColor: 'white',
-        borderColor: '#E74C3C',
-        borderWidth: 2,
+        marginRight: 8,
+        width: 12,
+    },
+    pitchCountText: {
+        color: '#FFF',
+        fontSize: 16,
+        fontWeight: 'bold',
+        minWidth: 20,
+    },
+    latestRecordContainer: {
+        flex: 1, // 佔滿剩餘空間
+        alignItems: 'flex-end',
+    },
+    latestRecordText: {
+        fontSize: 16,
+        fontWeight: '900',
+        textShadowColor: 'rgba(0, 0, 0, 0.75)',
+        textShadowOffset: {width: -1, height: 1},
+        textShadowRadius: 10
     },
     drawerContainer: {
         position: 'absolute',
