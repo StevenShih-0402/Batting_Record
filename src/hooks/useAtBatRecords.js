@@ -1,8 +1,8 @@
 // src/hooks/useAtBatRecords.js
 // 核心業務邏輯 (重要!)
 import { useState, useEffect } from 'react';
-import { onAuthStateChanged } from 'firebase/auth'; 
-import { firebaseStatus, initAuthAndGetRecords, savePitchRecord, deletePitchRecord, saveAtBatSummaryAndClearRecords } from '../services/firebaseService';
+import { onAuthStateChanged, signInAnonymously } from 'firebase/auth'; 
+import { firebaseStatus, initAuthAndGetRecords, savePitchRecord, deletePitchRecord, updatePitchRecord, saveAtBatSummaryAndClearRecords } from '../services/firebaseService';
 import { Alert } from 'react-native';
 
 const useAtBatRecords = () => {
@@ -22,32 +22,50 @@ const useAtBatRecords = () => {
     // 2. Auth listener: 監聽用戶狀態，確保 App 的資料永遠是最新的
     // 2.1. 身分監聽：透過 onAuthStateChanged 監控使用者是否登入。
     useEffect(() => {
-        if (!firebaseStatus.isReady) {
-             setLoading(false); 
-             return;
-        }
+        if (!firebaseStatus.isReady) return;
         
-        const unsubscribeAuth = onAuthStateChanged(firebaseStatus.auth, (u) => {
-            setUser(u);
+        const unsubscribeAuth = onAuthStateChanged(firebaseStatus.auth, async (u) => {
+            if (!u) {
+                console.log("偵測到未登入，啟動匿名登入...");
+                try {
+                    // 這裡匯入你的 signInAnonymously 函式
+                    await signInAnonymously(firebaseStatus.auth);
+                } catch (err) {
+                    console.error("匿名登入失敗:", err);
+                }
+            } else {
+                console.log("使用者已就緒:", u.uid);
+                setUser(u);
+            }
         });
         
         return () => unsubscribeAuth();
-    }, []);
+    }, [firebaseStatus.isReady]);
 
 
     // 2.2. Firestore 監聽：當使用者身分確認後，它會呼叫 initAuthAndGetRecords。
     // 這是一個「即時連線」，只要資料庫一有變動（例如另一台手機新增了紀錄），你的 App 畫面會自動更新，不需要重新整理。
     useEffect(() => {
         // 如果 Firebase 服務未準備好，則跳過，讓上面的 useEffect 處理 loading 狀態。
-        if (!firebaseStatus.isReady) return; 
+        // 關鍵修改：如果 Firebase 還沒準備好，或者 user 還沒登入成功 (null)，就不要啟動監聽
+        if (!firebaseStatus.isReady || !user) {
+            // 如果此時 user 為 null，我們應該讓 2.1 的 auth listener 先處理匿名登入
+            // 或者是確保在 initAuthAndGetRecords 外部已經有基本的登入邏輯
+            return; 
+        }
 
-        // 呼叫 Service 層來設置即時監聽。
-        // 當 user 為 null 時， initAuthAndGetRecords 會在內部啟動匿名登入。
+        console.log("身分已確認，啟動 Firestore 監聽: ", user.uid);
+        
+        // 現在有 user 了，再啟動監聽，權限就不會報錯
         const unsubscribeFirestore = initAuthAndGetRecords(setRawRecords, setLoading, user);
 
-        return () => unsubscribeFirestore();
+        return () => {
+            if (typeof unsubscribeFirestore === 'function') {
+                unsubscribeFirestore();
+            }
+        };
         
-    }, [user]); // 依賴 user 狀態，確保登入完成後會重新執行，並將 user 傳入 initAuthAndGetRecords。
+    }, [user, firebaseStatus.isReady]); // 依賴 user 狀態，確保登入完成後會重新執行，並將 user 傳入 initAuthAndGetRecords。
     
     // 3. 棒球球數規則計算邏輯
     // 資料庫只存了「這球是好球」，它並不存「這球是第幾個好球」。
@@ -147,7 +165,19 @@ const useAtBatRecords = () => {
         }
     };
 
-    // 4.3. 當打席結束，點擊「儲存紀錄」時，把這組球數打包存入「彙整表」並清空當前畫面。
+    // 4.3. 從資料庫編輯紀錄
+    const handleUpdatePitch = async (id, updatedData) => {
+        try {
+            // 呼叫 Service 層處理資料庫更新
+            await updatePitchRecord(id, updatedData);
+            return true; 
+        } catch (error) {
+            Alert.alert("更新失敗", error.message);
+            return false;
+        }
+    };
+
+    // 4.4. 當打席結束，點擊「儲存紀錄」時，把這組球數打包存入「彙整表」並清空當前畫面。
     const handleSaveSummary = async (summaryData) => {
         try {
             const currentRecordsAscending = [...atBatRecords].reverse();
@@ -165,6 +195,7 @@ const useAtBatRecords = () => {
         atBatStatus,
         handleSavePitch,
         handleDeletePitch,
+        handleUpdatePitch,
         handleSaveSummary,
         userReady: !!user,
     };

@@ -9,9 +9,11 @@ import {
   onSnapshot, 
   serverTimestamp, 
   deleteDoc, 
+  updateDoc,
   doc,
   writeBatch, 
-  getDocs 
+  getDocs,
+  orderBy,
 } from 'firebase/firestore';
 import { 
   getAuth, 
@@ -77,14 +79,22 @@ export const initAuthAndGetRecords = (setRecordsCallback, setLoadingCallback, us
     
     // Auth Listener 在 Hook 中處理
     // 只要雲端資料庫一變動（例如別台手機存入一球），它會立刻被觸發，並透過 setRecordsCallback 把最新的列表回傳給 Hook。
-    const q = query(collection(db, PITCH_RECORDS_PATH));
+    // 建議改為按時間降序排列 (最新的在最上面)
+    const q = query(
+        collection(db, PITCH_RECORDS_PATH), 
+        orderBy('createdAt', 'desc') 
+    );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-        const rawRecords = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data(),
-            createdAt: doc.data().createdAt?.toDate() 
-        }));
+        const rawRecords = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                ...data,
+                // 增加預防機制：如果雲端時間還沒回來，先給它現在時間，避免 toDate() 報錯
+                createdAt: data.createdAt ? data.createdAt.toDate() : new Date() 
+            };
+        });
         
         setRecordsCallback(rawRecords);
         setLoadingCallback(false); 
@@ -120,7 +130,16 @@ export const savePitchRecord = async (data, user) => {
     });
 };
 
-// 3.3. 刪除單次紀錄 
+// 3.3. 編輯單次紀錄
+export const updatePitchRecord = async (id, updatedData) => {
+    const docRef = doc(db, PITCH_RECORDS_PATH, id);
+    return await updateDoc(docRef, {
+        ...updatedData,
+        updatedAt: new Date() // 紀錄一下最後修改時間
+    });
+};
+
+// 3.4. 刪除單次紀錄 
 export const deletePitchRecord = async (id) => {
     if (!firebaseStatus.isReady) {
         throw new Error("Database not ready.");

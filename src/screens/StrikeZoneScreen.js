@@ -15,10 +15,13 @@ import { Layout } from '../constants/Layout';
 // 導入組件
 import PitchGrid from '../components/common/PitchGrid';
 import Dot from '../components/common/Dot';
-import HistoryList from '../components/HistoryList';
+import BallIndicator from '../components/common/BallIndicator';
 import PitchInputModal from '../components/modals/PitchInputModal';
 import EndAtBatModal from '../components/modals/EndAtBatModal';
-import BallIndicator from '../components/common/BallIndicator';
+import PitchEditModal from '../components/modals/PitchEditModal';
+import HistoryList from '../components/HistoryList';
+
+
 
 
 const StrikeZoneScreen = () => {
@@ -32,11 +35,16 @@ const StrikeZoneScreen = () => {
         atBatStatus, 
         handleSavePitch, 
         handleDeletePitch, 
+        handleUpdatePitch,
         handleSaveSummary,
     } = useAtBatRecords();
     
     // 用於 Modal 內部 loading 狀態
     const [isSaving, setIsSaving] = useState(false); 
+
+    // 編輯逐球資料的 Modal 狀態設定
+    const [editingRecord, setEditingRecord] = useState(null);
+    const [isEditModalVisible, setIsEditModalVisible] = useState(false);
     
     // 儲存與設定 Modal 的數據
     const [isPitchModalVisible, setIsPitchModalVisible] = useState(false); 
@@ -146,6 +154,12 @@ const StrikeZoneScreen = () => {
     const handlePitchModalClose = useCallback(() => {
         setIsPitchModalVisible(false); 
     }, []);
+
+    // 處理編輯資料 Modal 的狀態
+    const handleEditPress = (record) => {
+        setEditingRecord(record);
+        setIsEditModalVisible(true);
+    };
     
     // 處理單一球數數據儲存 (傳遞給 Modal 的 prop)
     const onSavePitch = useCallback(async (data) => {
@@ -159,6 +173,22 @@ const StrikeZoneScreen = () => {
             handlePitchModalClose();
         }
     }, [handleSavePitch, handlePitchModalClose]);
+
+    // 處理單一球數數據編輯
+    const onUpdatePitch = useCallback(async (updatedData) => {
+        if (!editingRecord) return;
+        
+        setIsSaving(true);
+        try {
+            const success = await handleUpdatePitch(editingRecord.id, updatedData);
+            if (success) {
+                setIsEditModalVisible(false);
+                setEditingRecord(null);
+            }
+        } finally {
+            setIsSaving(false);
+        }
+    }, [editingRecord, handleUpdatePitch]);
 
     // 將歷史紀錄的每一筆資料渲染成九宮格上的球
     const renderHistoryDots = () => {
@@ -346,7 +376,11 @@ const StrikeZoneScreen = () => {
                     
                     <Text style={[styles.listTitle, { color: theme.colors.onSurface, paddingTop: 16 }]}>當前打席球數 ( {atBatRecords.length} 球 )</Text>
                     
-                    <HistoryList records={atBatRecords} onDelete={handleDeletePitch} />
+                    <HistoryList 
+                        records={atBatRecords} 
+                        onDelete={handleDeletePitch} 
+                        onEdit={handleEditPress}
+                    />
 
                 </ScrollView>
             </Animated.View>
@@ -359,6 +393,22 @@ const StrikeZoneScreen = () => {
                 onSave={onSavePitch} 
                 cellInfo={selectedCellInfo}
                 atBatStatus={atBatStatus}
+                isSaving={isSaving}
+            />
+
+            {/* 編輯數據彈窗 */}
+            <PitchEditModal
+                isVisible={isEditModalVisible}
+                record={editingRecord} // 傳入當前選中的紀錄
+                onClose={() => {
+                    setIsEditModalVisible(false);
+                    setEditingRecord(null);
+                }}
+                onSave={onUpdatePitch}
+                onDelete={(id) => {
+                    handleDeletePitch(id);
+                    setIsEditModalVisible(false);
+                }}
                 isSaving={isSaving}
             />
 

@@ -2,12 +2,12 @@
 // 顯示逐球紀錄的側邊選單紀錄列
 import React from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
-import { Text, useTheme } from 'react-native-paper';
+import { TouchableRipple, Text, useTheme } from 'react-native-paper';
 import { Feather as Icon } from '@expo/vector-icons';
 import { getColorByResult } from '../constants/Colors';
 
 // 修正：將 records 設置為預設空陣列 records = []，以避免 'map' of undefined 錯誤。
-const HistoryList = ({ records = [], onDelete }) => {
+const HistoryList = ({ records = [], onDelete, onEdit }) => {
     const theme = useTheme();
 
     if (records.length === 0) { 
@@ -29,42 +29,41 @@ const HistoryList = ({ records = [], onDelete }) => {
                 const itemColor = getColorByResult(record.result, finalOutcome);
                 
                 return (
-                    <View key={record.id} style={[styles.recordItem, {backgroundColor: theme.colors.surfaceVariant }, { borderBottomColor: theme.colors.outline }]}>
-                        <View style={[
-                            styles.pitchIndexCircle, 
-                            { backgroundColor: itemColor } 
-                        ]}>
-                            <Text style={{ color: theme.colors.background, fontWeight: 'bold' }}>
-                                {records.length - index}
-                            </Text> 
-                        </View>
+                    <TouchableRipple
+                        key={record.id}
+                        onPress={() => onEdit(record)} // 點擊整列觸發編輯
+                        rippleColor={theme.colors.primary + '20'} // 20 代表透明度
+                        style={{ borderBottomWidth: 1, borderBottomColor: theme.colors.outline }}
+                    >
+                        <View key={record.id} style={[styles.recordItem, { backgroundColor: theme.colors.surfaceVariant, borderBottomColor: theme.colors.outline }]}>
+                            {/* 1. 左側數字圓圈 */}
+                            <View style={[styles.pitchIndexCircle, { backgroundColor: itemColor }]}>
+                                <Text style={{ color: theme.colors.background, fontWeight: 'bold' }}>
+                                    {records.length - index}
+                                </Text> 
+                            </View>
 
-                        <View style={styles.recordContent}>
-                            <Text style={[styles.recordResult, {color: itemColor}]}>
-                                {displayResult} {finalOutcome === '打擊出去'}
-                            </Text>
-                            <Text style={[styles.recordDetails, { color: theme.colors.onSurface }]}> 
-                                {record.pitchType} | {typeof record.speed === 'number' && record.speed > 0 ? `${record.speed.toFixed(1)} km/h ` : ''} 
-                                {record.note ? `\n備註: ${record.note}` : ''}
-                            </Text>
-                        </View>
+                            {/* 2. 中間內容 (自動撐開) */}
+                            <View style={[styles.recordContent, { flex: 1 }]}>
+                                <Text style={[styles.recordResult, { color: itemColor }]}>
+                                    {displayResult}
+                                </Text>
+                                <Text style={[styles.recordDetails, { color: theme.colors.onSurface }]}> 
+                                    {record.pitchType}
+                                    {record.speed && record.speed > 0 ? `\n${record.speed.toFixed(1)} km/h` : ''} 
+                                    {record.note ? `\n備註: ${record.note}` : ''}
+                                </Text>
+                            </View>
 
-                        <View style={styles.recordCount}>
-                            {finalOutcome ? (
-                                 <Text style={[styles.recordCountText, {color: theme.colors.error }]}>
-                                    已結束
+                            {/* 3. 右側狀態 (球數、編輯按鈕) */}
+                            <View style={styles.recordCount}>
+                                <Text style={[styles.recordCountText, { color: theme.colors.onSurface }]}>
+                                    {finalOutcome ? 'END' : `${record.runningBalls}-${record.runningStrikes}`}
                                 </Text>
-                            ) : (
-                                <Text style={[styles.recordCountText, {color: theme.colors.onSurface}]}>
-                                    {record.runningBalls}-{record.runningStrikes}
-                                </Text>
-                            )}
-                            
-                            <TouchableOpacity onPress={() => onDelete(record.id)} style={{ paddingLeft: 10 }}>
-                                <Icon name="trash-2" size={16} color={theme.colors.error} />
-                            </TouchableOpacity>
+                                <Icon name="edit" size={16} color={theme.colors.onSurfaceVariant} />
+                            </View>
                         </View>
-                    </View>
+                    </TouchableRipple>
                 );
             })}
         </View>
@@ -81,7 +80,7 @@ const styles = StyleSheet.create({
     },
     recordItem: {
         flexDirection: 'row',
-        alignItems: 'flex-start',
+        alignItems: 'stretch',              // 關鍵：讓所有子 View (左、中、右) 高度一致
         justifyContent: 'space-between',
         paddingVertical: 12,
         borderBottomWidth: 1,
@@ -110,7 +109,10 @@ const styles = StyleSheet.create({
     },
     recordCount: {
         flexDirection: 'column', 
+        justifyContent: 'space-between', 
         alignItems: 'flex-end', 
+        // borderWidth: 1, 
+        // borderColor: 'red',
         flexShrink: 0, 
         marginLeft: 10,
     },
