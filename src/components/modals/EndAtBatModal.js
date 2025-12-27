@@ -5,6 +5,9 @@ import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Text, useTheme, Button, Modal, Portal, TextInput } from 'react-native-paper';
 import { Feather as Icon } from '@expo/vector-icons';
 
+// 匯入表單元件
+import NoteInput from '../forms/NoteInput';
+
 const EndAtBatModal = ({ isVisible, onClose, onSave, atBatRecords }) => {
     const theme = useTheme();
     const [summaryNote, setSummaryNote] = useState('');
@@ -60,21 +63,16 @@ const EndAtBatModal = ({ isVisible, onClose, onSave, atBatRecords }) => {
                 
                 <Text style={{marginBottom: 10}}>當前球數: {atBatRecords.length > 0 ? atBatRecords[0].runningStrikes : 0} 好 {atBatRecords.length > 0 ? atBatRecords[0].runningBalls : 0} 壞</Text>
                 
-                <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>備註:</Text>
-                    <TextInput
-                        mode="outlined"
-                        value={summaryNote}
-                        onChangeText={setSummaryNote}
-                        label="主觀描述，Ex: 一壘軟弱滾地球"
-                        multiline
-                        numberOfLines={4}
-                        style={{ minHeight: 150 }}
-                    />
-                </View>
+                <NoteInput 
+                    label="備註"
+                    value={summaryNote}
+                    onChangeText={setSummaryNote}
+                    placeholder="主觀描述，Ex: 一壘軟弱滾地球"
+                    numberOfLines={4}
+                    style={{ minHeight: 150 }} // 這裡傳入 custom style 會蓋掉元件預設值
+                />
 
                 <View style={styles.footerButtons}>
-                    <Button mode="outlined" onPress={onClose} style={{ marginRight: 10 }}>取消</Button>
                     <Button 
                         mode="contained" 
                         onPress={handleSave} 

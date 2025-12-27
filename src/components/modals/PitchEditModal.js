@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
-import { Modal, Portal, Text, Button, TextInput, Menu, useTheme, IconButton, SegmentedButtons } from 'react-native-paper';
+import { Modal, Portal, Text, Button, TextInput, Menu, List, useTheme, IconButton, SegmentedButtons } from 'react-native-paper';
 import { Feather as Icon } from '@expo/vector-icons';
 import { getColorByResult } from '../../constants/Colors';
 import { PITCH_TYPES_ZH } from '../../constants/GameConstants';
+
+// 匯入表單元件
+import SelectionDropdown from '../forms/SelectionDropdown';
+import SpeedInput from '../forms/SpeedInput';
+import NoteInput from '../forms/NoteInput';
 
 const PitchEditModal = ({ isVisible, record, onClose, onSave, onDelete, isSaving }) => {
     const theme = useTheme();
@@ -14,6 +19,7 @@ const PitchEditModal = ({ isVisible, record, onClose, onSave, onDelete, isSaving
     const [note, setNote] = useState('');
     const [result, setResult] = useState('');
     const [showMenu, setShowMenu] = useState(false);
+    const [isExpanded, setIsExpanded] = useState(false);
 
     // 當 record 改變（即使用者點擊不同球時），同步初始化表單
     useEffect(() => {
@@ -55,79 +61,31 @@ const PitchEditModal = ({ isVisible, record, onClose, onSave, onDelete, isSaving
                 </View>
 
                 <ScrollView style={styles.content}>
-                    {/* 1. 結果顯示 (MD3 SegmentedButton 風格可考慮，這裡先用資訊列顯示) */}
+                    {/* 1. 頂部資訊卡 (保持不變) */}
                     <View style={styles.infoSection}>
-                        <Text variant="labelLarge" style={{ color: theme.colors.onSurfaceVariant }}>當前結果：{record.result}</Text>
+                        <Text variant="labelLarge" style={{ color: dotColor }}>當前結果：{record.result}</Text>
                         <Text variant="bodySmall">位置：{record.cellNumber > 0 ? `${record.cellNumber} 號位` : '九宮格外'}</Text>
                     </View>
 
-                    {/* 2. 球種輸入 (未來可改為選單) */}
-                    {/* <TextInput
+                    {/* 2. 球種表單選單 (Inline) */}
+                    <SelectionDropdown 
                         label="球種"
-                        value={pitchType}
-                        onChangeText={setPitchType}
-                        mode="outlined"
-                        style={styles.input}
-                        placeholder="例如：直球、滑球..."
-                        left={<TextInput.Icon icon="baseball" />}
-                    /> */}
-                    <Menu
-                        visible={showMenu}
-                        onDismiss={() => setShowMenu(false)}
-                        // 關鍵點 1：確保 anchor 容器乾淨
-                        anchor={
-                            <TextInput
-                                label="球種"
-                                value={pitchType}
-                                mode="outlined"
-                                style={styles.input}
-                                editable={false} 
-                                // 關鍵點 2：在右側圖示手動觸發開關
-                                right={
-                                    <TextInput.Icon 
-                                        icon={showMenu ? "chevron-up" : "chevron-down"} 
-                                        onPress={() => setShowMenu(true)} 
-                                    />
-                                }
-                                left={<TextInput.Icon icon="baseball" />}
-                                // 關鍵點 3：使用 onPressIn 觸發
-                                onPressIn={() => setShowMenu(true)}
-                            />
-                        }
-                    >
-                        {PITCH_TYPES_ZH.map((type) => (
-                            <Menu.Item 
-                                key={type}
-                                onPress={() => {
-                                    setPitchType(type);
-                                    setShowMenu(false); // 選擇後關閉
-                                }} 
-                                title={type} 
-                            />
-                        ))}
-                    </Menu>
+                        selectedValue={pitchType}
+                        options={PITCH_TYPES_ZH}
+                        onSelect={setPitchType}
+                        icon="baseball"
+                    />
 
-                    {/* 3. 球速輸入 */}
-                    <TextInput
-                        label="球速 (km/h)"
+                    {/* 3. 球速輸入 (數值輸入優化) */}
+                    <SpeedInput 
                         value={speed}
                         onChangeText={setSpeed}
-                        keyboardType="decimal-pad"
-                        mode="outlined"
-                        style={styles.input}
-                        left={<TextInput.Icon icon="speedometer" />}
                     />
 
                     {/* 4. 備註輸入 */}
-                    <TextInput
-                        label="備註"
+                    <NoteInput 
                         value={note}
                         onChangeText={setNote}
-                        mode="outlined"
-                        multiline
-                        numberOfLines={3}
-                        style={styles.input}
-                        placeholder="紀錄投球細節..."
                     />
                 </ScrollView>
 
@@ -202,9 +160,6 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         backgroundColor: 'rgba(0,0,0,0.05)',
     },
-    input: {
-        marginBottom: 16,
-    },
     footer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -217,6 +172,32 @@ const styles = StyleSheet.create({
     button: {
         marginLeft: 8,
     },
+    selectBox: {
+        borderWidth: 1,
+        borderColor: '#79747E', // MD3 標準 Outline 顏色
+        borderRadius: 4,        // 與 TextInput 對齊
+        marginBottom: 16,
+        overflow: 'hidden',
+        backgroundColor: 'transparent',
+    },
+    selectBoxExpanded: {
+        borderColor: '#6750A4', // 展開時變為主色 (Primary)
+        borderWidth: 2,
+    },
+    accordion: {
+        backgroundColor: 'transparent',
+        paddingVertical: 0,
+        height: 56, // 強制與 TextInput 的預設高度一致
+        justifyContent: 'center',
+    },
+    accordionTitle: {
+        fontSize: 16,
+    },
+    pitchItem: {
+        borderTopWidth: 0.5,
+        borderTopColor: 'rgba(0,0,0,0.1)',
+        backgroundColor: 'rgba(0,0,0,0.02)',
+    }
 });
 
 export default PitchEditModal;

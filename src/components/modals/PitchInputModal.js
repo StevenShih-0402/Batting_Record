@@ -1,12 +1,15 @@
 // src/components/modals/PitchInputModal.js
 // 輸入逐球紀錄的彈窗
 import React, { useState, useEffect } from 'react';
-import { View, Alert, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Alert, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Text, useTheme, Button, Modal, Portal, TextInput } from 'react-native-paper';
 import { Feather as Icon } from '@expo/vector-icons';
-import SelectionDropdown from '../common/SelectionDropdown';
 import { PITCH_TYPES_ZH, PITCH_RESULTS } from '../../constants/GameConstants';
 
+// 匯入表單元件
+import SelectionDropdown from '../forms/SelectionDropdown';
+import SpeedInput from '../forms/SpeedInput';
+import NoteInput from '../forms/NoteInput';
 
 const PitchInputModal = ({ isVisible, onClose, onSave, cellInfo, atBatStatus, isSaving }) => {
     const theme = useTheme();
@@ -96,62 +99,51 @@ const PitchInputModal = ({ isVisible, onClose, onSave, cellInfo, atBatStatus, is
     return (
         <Portal>
             <Modal visible={isVisible} onDismiss={onClose} contentContainerStyle={[styles.modalContainer, { backgroundColor: theme.colors.surface }]}>
-                <View style={styles.modalHeader}>
-                    <Text 
-                        style={[styles.modalTitle, { 
-                            color: theme.colors.primary, 
-                            flexShrink: 1 
-                        }]}
-                    >
-                        {cellInfo.cellNumber > 0 ? `${cellInfo.cellNumber} 號位` : '九宮格外 '} 
-                    </Text>
-                    <TouchableOpacity onPress={onClose} style={{padding: 5}}>
-                        <Icon name="x" size={24} color={theme.colors.onSurface} />
-                    </TouchableOpacity>
-                </View>
+                {/* 使用 ScrollView 確保展開選單時可以滑動 */}
+                <ScrollView style={{ marginBottom: 20, }} showsVerticalScrollIndicator={false}>
+                    
+                    <View style={styles.modalHeader}>
+                        <Text style={[styles.modalTitle, { color: theme.colors.primary, flexShrink: 1 }]}>
+                            {cellInfo.cellNumber > 0 ? `${cellInfo.cellNumber} 號位` : '九宮格外'}
+                        </Text>
+                        <TouchableOpacity onPress={onClose} style={{ padding: 5 }}>
+                            <Icon name="x" size={24} color={theme.colors.onSurface} />
+                        </TouchableOpacity>
+                    </View>
 
-                <SelectionDropdown 
-                    label="球種"
-                    selectedValue={pitchType}
-                    options={PITCH_TYPES_ZH}
-                    onSelect={setPitchType}
-                />
-
-                <SelectionDropdown 
-                    label="結果"
-                    selectedValue={result}
-                    options={getResultOptions()} 
-                    onSelect={setResult}
-                    disabled={atBatStatus.lastResult === '打擊出去'} 
-                />
-                
-                <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>球速</Text>
-                    <TextInput
-                        mode="outlined"
-                        value={speed}
-                        onChangeText={text => setSpeed(text.replace(/[^0-9.]/g, ''))}
-                        keyboardType="numeric"
-                        label="km/h"
-                        style={{ width: '33%' }}
-                        disabled={atBatStatus.lastResult === '打擊出去'}
+                    {/* 球種 - 內嵌表單式 */}
+                    <SelectionDropdown 
+                        label="球種"
+                        selectedValue={pitchType}
+                        options={PITCH_TYPES_ZH}
+                        onSelect={setPitchType}
                     />
-                </View>
 
-                <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>備註</Text>
-                    <TextInput
-                        mode="outlined"
+                    {/* 結果 - 內嵌表單式 */}
+                    <SelectionDropdown 
+                        label="結果"
+                        icon='baseball-bat'
+                        selectedValue={result}
+                        options={getResultOptions()} 
+                        onSelect={setResult}
+                        disabled={atBatStatus.lastResult === '打擊出去'} 
+                    />
+
+                    {/* 球速 - 佈局優化 */}
+                    <SpeedInput 
+                        value={speed}
+                        onChangeText={setSpeed}
+                    />
+
+                    {/* 備註 */}
+                    <NoteInput 
                         value={note}
                         onChangeText={setNote}
-                        label="輸入細部資訊，Ex. 誤判"
-                        multiline
-                        numberOfLines={3}
-                        style={{ minHeight: 80 }}
-                        disabled={atBatStatus.lastResult === '打擊出去'}
                     />
-                </View>
 
+                </ScrollView>
+
+                {/* 按鈕放在 ScrollView 外，保持在底部固定位置 */}
                 <Button 
                     mode="contained" 
                     onPress={handleSave} 
