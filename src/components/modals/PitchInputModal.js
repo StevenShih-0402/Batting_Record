@@ -11,89 +11,17 @@ import SelectionDropdown from '../forms/SelectionDropdown';
 import SpeedInput from '../forms/SpeedInput';
 import NoteInput from '../forms/NoteInput';
 
+// 匯入 hook
+import { usePitchInput } from '../../hooks/ui/usePitchInput';
+
 const PitchInputModal = ({ isVisible, onClose, onSave, cellInfo, atBatStatus, isSaving }) => {
     const theme = useTheme();
-    const [pitchType, setPitchType] = useState(PITCH_TYPES_ZH[0]);
-    const [result, setResult] = useState(PITCH_RESULTS[0]); 
-    const [speed, setSpeed] = useState(''); 
-    const [note, setNote] = useState(''); 
     
-    useEffect(() => {
-        if (!isVisible) {
-            setPitchType(PITCH_TYPES_ZH[0]);
-            setResult(PITCH_RESULTS[0]);
-            setSpeed('');
-            setNote('');
-        }
-    }, [isVisible]);
-
-    const handleSave = async () => {
-        if (atBatStatus.isFinished) {
-            let finishReason = '';
-            if (atBatStatus.balls >= 4) finishReason = '四壞球保送';
-            else if (atBatStatus.strikes >= 3) finishReason = '三振';
-            else if (atBatStatus.lastResult === '打擊出去') finishReason = '打擊出去';
-
-            Alert.alert(
-                "打席已結束", 
-                `當前打席已因 ${finishReason} 而結束。請先在抽屜中點擊「儲存紀錄」按鈕，結束此打席後才能開始新的紀錄。`,
-            );
-            return;
-        }
-
-        if (result === '好球' && atBatStatus.strikes >= 3) {
-            Alert.alert("無法儲存", "好球數已達 3 個（三振）。請改選其他結果或結束打席。");
-            return;
-        }
-        if (result === '壞球' && atBatStatus.balls >= 4) {
-            Alert.alert("無法儲存", "壞球數已達 4 個（保送）。請改選其他結果或結束打席。");
-            return;
-        }
-        
-        // 需求 1: 移除「打擊出去」的提示彈窗
-        if (result === '打擊出去' && atBatStatus.atBatRecordsCount > 0) {
-            performSave(); 
-            return;
-        }
-
-        performSave();
-    };
-
-    const performSave = async () => {
-        const safeGridX = typeof cellInfo.gridX === 'number' ? cellInfo.gridX : 0.5;
-        const safeGridY = typeof cellInfo.gridY === 'number' ? cellInfo.gridY : 0.5;
-        
-        let finalSpeed = parseFloat(speed);
-        if (isNaN(finalSpeed) || speed.trim() === '') {
-            finalSpeed = 0; 
-        }
-
-        const data = {
-            pitchType,
-            result, 
-            speed: finalSpeed, 
-            cellNumber: cellInfo.cellNumber,
-            gridX: safeGridX, 
-            gridY: safeGridY,
-            note: note, 
-        };
-        
-        try {
-            await onSave(data);
-        } catch (error) {
-            // 錯誤由父層 hook 處理
-        }
-    };
-
-    const getResultOptions = () => {
-        if (atBatStatus.strikes >= 3) {
-            return PITCH_RESULTS.filter(r => r !== '好球');
-        }
-        if (atBatStatus.balls >= 4) {
-            return PITCH_RESULTS.filter(r => r !== '壞球');
-        }
-        return PITCH_RESULTS;
-    };
+    // 引入 Hook
+    const { 
+        form, setPitchType, setResult, setSpeed, setNote, 
+        getResultOptions, handleSave 
+    } = usePitchInput(isVisible, cellInfo, atBatStatus, onSave);
 
 
     return (
@@ -114,7 +42,7 @@ const PitchInputModal = ({ isVisible, onClose, onSave, cellInfo, atBatStatus, is
                     {/* 球種 - 內嵌表單式 */}
                     <SelectionDropdown 
                         label="球種"
-                        selectedValue={pitchType}
+                        selectedValue={form.pitchType}
                         options={PITCH_TYPES_ZH}
                         onSelect={setPitchType}
                     />
@@ -123,21 +51,21 @@ const PitchInputModal = ({ isVisible, onClose, onSave, cellInfo, atBatStatus, is
                     <SelectionDropdown 
                         label="結果"
                         icon='baseball-bat'
-                        selectedValue={result}
-                        options={getResultOptions()} 
+                        selectedValue={form.result}
+                        options={getResultOptions(PITCH_RESULTS)} 
                         onSelect={setResult}
                         disabled={atBatStatus.lastResult === '打擊出去'} 
                     />
 
                     {/* 球速 - 佈局優化 */}
                     <SpeedInput 
-                        value={speed}
+                        value={form.speed}
                         onChangeText={setSpeed}
                     />
 
                     {/* 備註 */}
                     <NoteInput 
-                        value={note}
+                        value={form.note}
                         onChangeText={setNote}
                     />
 
@@ -176,14 +104,6 @@ const styles = StyleSheet.create({
     modalTitle: {
         fontSize: 20,
         fontWeight: 'bold',
-    },
-    inputGroup: {
-        marginBottom: 20,
-    },
-    inputLabel: {
-        fontSize: 16,
-        fontWeight: '600',
-        marginBottom: 10,
     },
     saveButton: {
         marginTop: 10,

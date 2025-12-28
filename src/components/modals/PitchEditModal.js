@@ -1,7 +1,9 @@
+// src/components/modals/PitchEditModal.js
+// 編輯與刪除逐球紀錄的彈窗
+
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
-import { Modal, Portal, Text, Button, TextInput, Menu, List, useTheme, IconButton, SegmentedButtons } from 'react-native-paper';
-import { Feather as Icon } from '@expo/vector-icons';
+import { Modal, Portal, Text, Button, useTheme, IconButton } from 'react-native-paper';
 import { getColorByResult } from '../../constants/Colors';
 import { PITCH_TYPES_ZH } from '../../constants/GameConstants';
 
@@ -10,37 +12,17 @@ import SelectionDropdown from '../forms/SelectionDropdown';
 import SpeedInput from '../forms/SpeedInput';
 import NoteInput from '../forms/NoteInput';
 
+// 匯入 hook
+import { usePitchEdit } from '../../hooks/ui/usePitchEdit';
+
 const PitchEditModal = ({ isVisible, record, onClose, onSave, onDelete, isSaving }) => {
     const theme = useTheme();
 
-    // 本地表單狀態
-    const [speed, setSpeed] = useState('');
-    const [pitchType, setPitchType] = useState('');
-    const [note, setNote] = useState('');
-    const [result, setResult] = useState('');
-    const [showMenu, setShowMenu] = useState(false);
-    const [isExpanded, setIsExpanded] = useState(false);
-
-    // 當 record 改變（即使用者點擊不同球時），同步初始化表單
-    useEffect(() => {
-        if (record) {
-            setSpeed(record.speed ? record.speed.toString() : '');
-            setPitchType(record.pitchType || '');
-            setNote(record.note || '');
-            setResult(record.result || '');
-        }
-    }, [record, isVisible]);
+    // 使用自定義 Hook
+    const { formState, setSpeed, setPitchType, setNote, handleSave } = 
+        usePitchEdit(record, isVisible, onSave);
 
     if (!record) return null;
-
-    const handleSave = () => {
-        onSave({
-            speed: parseFloat(speed) || 0,
-            pitchType,
-            note,
-            result, // 允許修改結果（Hook 會自動重新計算好壞球數）
-        });
-    };
 
     const dotColor = getColorByResult(record.result, record.atBatEndOutcome);
 
@@ -70,21 +52,20 @@ const PitchEditModal = ({ isVisible, record, onClose, onSave, onDelete, isSaving
                     {/* 2. 球種表單選單 (Inline) */}
                     <SelectionDropdown 
                         label="球種"
-                        selectedValue={pitchType}
+                        selectedValue={formState.pitchType}
                         options={PITCH_TYPES_ZH}
                         onSelect={setPitchType}
-                        icon="baseball"
                     />
 
                     {/* 3. 球速輸入 (數值輸入優化) */}
                     <SpeedInput 
-                        value={speed}
+                        value={formState.speed}
                         onChangeText={setSpeed}
                     />
 
                     {/* 4. 備註輸入 */}
                     <NoteInput 
-                        value={note}
+                        value={formState.note}
                         onChangeText={setNote}
                     />
                 </ScrollView>
@@ -101,20 +82,16 @@ const PitchEditModal = ({ isVisible, record, onClose, onSave, onDelete, isSaving
                         刪除
                     </Button>
 
-                    {/* 右側：儲存 */}
-                    <View style={styles.rightActions}>
-                        
-                        <Button 
-                            mode="contained" 
-                            onPress={handleSave} 
-                            loading={isSaving}
-                            disabled={isSaving}
-                            style={styles.button}
-                            icon="pen"
-                        >
-                            更新
-                        </Button>
-                    </View>
+                    {/* 右側：儲存 */}     
+                    <Button 
+                        mode="contained" 
+                        onPress={handleSave} 
+                        loading={isSaving}
+                        disabled={isSaving}
+                        icon="pen"
+                    >
+                        更新
+                    </Button>
                 </View>
             </Modal>
         </Portal>
@@ -169,35 +146,6 @@ const styles = StyleSheet.create({
         borderTopWidth: 0.5,
         borderTopColor: 'rgba(0,0,0,0.1)',
     },
-    button: {
-        marginLeft: 8,
-    },
-    selectBox: {
-        borderWidth: 1,
-        borderColor: '#79747E', // MD3 標準 Outline 顏色
-        borderRadius: 4,        // 與 TextInput 對齊
-        marginBottom: 16,
-        overflow: 'hidden',
-        backgroundColor: 'transparent',
-    },
-    selectBoxExpanded: {
-        borderColor: '#6750A4', // 展開時變為主色 (Primary)
-        borderWidth: 2,
-    },
-    accordion: {
-        backgroundColor: 'transparent',
-        paddingVertical: 0,
-        height: 56, // 強制與 TextInput 的預設高度一致
-        justifyContent: 'center',
-    },
-    accordionTitle: {
-        fontSize: 16,
-    },
-    pitchItem: {
-        borderTopWidth: 0.5,
-        borderTopColor: 'rgba(0,0,0,0.1)',
-        backgroundColor: 'rgba(0,0,0,0.02)',
-    }
 });
 
 export default PitchEditModal;

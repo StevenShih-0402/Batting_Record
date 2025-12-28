@@ -36,5 +36,3 @@ export const getCellNumber = (absoluteX, absoluteY, gridLayout) => {
         relY: relY / gridLayout.height
     };
 };
-
-// export { SCREEN_WIDTH, SCREEN_HEIGHT };

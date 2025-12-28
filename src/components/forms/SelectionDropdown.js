@@ -2,7 +2,7 @@
 // 彈窗裡面的下拉選單
 import React, { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { List, useTheme, Text } from 'react-native-paper';
+import { List, useTheme } from 'react-native-paper';
 
 /*
 input:

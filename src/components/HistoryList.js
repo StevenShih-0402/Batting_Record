@@ -1,7 +1,7 @@
 // src/components/HistoryList.js
-// 顯示逐球紀錄的側邊選單紀錄列
+// 邏輯組件，顯示逐球紀錄的側邊選單紀錄列
 import React from 'react';
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { TouchableRipple, Text, useTheme } from 'react-native-paper';
 import { Feather as Icon } from '@expo/vector-icons';
 import { getColorByResult } from '../constants/Colors';
@@ -44,7 +44,7 @@ const HistoryList = ({ records = [], onDelete, onEdit }) => {
                             </View>
 
                             {/* 2. 中間內容 (自動撐開) */}
-                            <View style={[styles.recordContent, { flex: 1 }]}>
+                            <View style={ styles.recordContent }>
                                 <Text style={[styles.recordResult, { color: itemColor }]}>
                                     {displayResult}
                                 </Text>
@@ -111,8 +111,6 @@ const styles = StyleSheet.create({
         flexDirection: 'column', 
         justifyContent: 'space-between', 
         alignItems: 'flex-end', 
-        // borderWidth: 1, 
-        // borderColor: 'red',
         flexShrink: 0, 
         marginLeft: 10,
     },

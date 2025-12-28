@@ -1,7 +1,7 @@
 // src/components/forms/NoteInput.js
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { TextInput, useTheme, Text } from 'react-native-paper';
+import { StyleSheet } from 'react-native';
+import { TextInput, useTheme } from 'react-native-paper';
 
 const NoteInput = ({ 
     label = "備註", 
@@ -25,7 +25,7 @@ const NoteInput = ({
             placeholder={placeholder}
             multiline
             numberOfLines={numberOfLines}
-            style={[styles.defaultStyle, style, { marginBottom: 16 }]} // 合併預設樣式與傳入的自訂樣式
+            style={[styles.defaultStyle, style]} // 合併預設樣式與傳入的自訂樣式
             disabled={disabled}
         />
     );
@@ -34,6 +34,7 @@ const NoteInput = ({
 const styles = StyleSheet.create({
     defaultStyle: {
         minHeight: 120,
+        marginBottom: 16
     },
 });
 
