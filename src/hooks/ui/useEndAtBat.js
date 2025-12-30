@@ -1,4 +1,4 @@
-// hooks/useEndAtBat.js
+// hooks/ui/useEndAtBat.js
 // EndAtBatModal 的狀態管理與業務邏輯
 import { useState, useEffect } from 'react';
 import { Alert } from 'react-native';
@@ -14,27 +14,21 @@ export const useEndAtBat = (isVisible, atBatRecords, onSave, onClose) => {
         }
     }, [isVisible]);
 
+    // 儲存結算資料的方法
     const handleSave = async () => {
-        if (atBatRecords.length === 0) return;
+        // 使用 Optional Chaining 或檢查是否存在
+        if (!atBatRecords || atBatRecords.length === 0) return;
 
         setIsSaving(true);
         try {
             // 1. 執行原本的儲存邏輯
+            // 這裡傳出去的 onSave，其實就是 useAtBatRecords 的 handleSaveSummaryAction
             await onSave({ summaryNote });
 
             // 2. 儲存成功後，顯示 Alert
-            Alert.alert(
-                "儲存成功",
-                "打席紀錄已彙整存入資料庫。",
-                [
-                    { 
-                        text: "確定", 
-                        onPress: () => {
-                            // 3. 使用者按下確定後，執行原本傳進來的 onClose
-                            onClose();
-                            setSummaryNote(''); // 清空輸入框
-                        } 
-                    }
+            Alert.alert("儲存成功", "打席紀錄已彙整存入資料庫。",[
+                    // 3. 使用者按下確定後，執行原本傳進來的 onClose，並清空輸入框
+                    { text: "確定", onPress: () => { onClose(); setSummaryNote(''); }}
                 ],
                 { cancelable: false } // 強制使用者點擊按鈕
             );
@@ -46,24 +40,10 @@ export const useEndAtBat = (isVisible, atBatRecords, onSave, onClose) => {
         }
     };
 
-    return { summaryNote, setSummaryNote, isSaving, handleSave };
-};
-
-// 輔助函式：將資料格式化的邏輯抽離（這也可以放在 service 層）
-const formatAtBatData = (note, records) => {
-    const latest = records.length > 0 ? records[0] : { runningBalls: 0, runningStrikes: 0 };
-    return {
-        finalOutcome: '未選擇/已彙整',
-        summaryNote: note,
-        totalPitches: records.length,
-        pitchRecords: records.map(r => ({
-            pitchType: r.pitchType,
-            result: r.result,
-            speed: r.speed,
-            cellNumber: r.cellNumber,
-            note: r.note,
-        })),
-        finalBalls: latest.runningBalls,
-        finalStrikes: latest.runningStrikes,
+    return { 
+        summaryNote, 
+        setSummaryNote, 
+        isSaving, 
+        handleSave,
     };
 };

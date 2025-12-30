@@ -10,7 +10,7 @@ import NoteInput from '../forms/NoteInput';
 // 匯入 hook
 import { useEndAtBat } from '../../hooks/ui/useEndAtBat';
 
-const EndAtBatModal = ({ isVisible, onClose, onSave, atBatRecords }) => {
+const EndAtBatModal = ({ isVisible, onClose, onSave, atBatRecords = [] }) => {
     const theme = useTheme();
     
     // 將邏輯委託給 Hook

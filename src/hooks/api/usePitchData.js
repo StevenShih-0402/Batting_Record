@@ -2,7 +2,8 @@
 // Firebase 的 CRUD，與彙整打席紀錄的資料庫操作
 import { useState, useEffect } from 'react';
 import { Alert } from 'react-native';
-import { initAuthAndGetRecords, savePitchRecord, deletePitchRecord, updatePitchRecord, saveAtBatSummaryAndClearRecords } from '../../services/firebaseService';
+import { initAuthAndGetRecords, savePitchRecord, deletePitchRecord, updatePitchRecord } from '../../services/pitchService'; 
+import { saveAtBatSummaryAndClearRecords } from '../../services/atBatSummaryService';
 
 export const usePitchData = (user, authReady) => {
     const [rawRecords, setRawRecords] = useState([]);
@@ -39,12 +40,28 @@ export const usePitchData = (user, authReady) => {
     };
 
     // 自訂業務邏輯
-    // 4. 彙整打席資料
-    const handleSaveSummary = async (summaryData, atBatRecords) => {
+    // 4. 彙整打席資料：只負責存檔與清空
+    const handleSaveSummary = async (finalPayload) => {
+        if (!user?.uid) return;
+
+        // 增加這行防禦：確保 payload 存在，且裡面的紀錄不是 undefined
+        if (!finalPayload || !finalPayload.pitchRecords) {
+            console.warn("Payload 或 pitchRecords 丟失");
+            return;
+        }
+
         try {
-            const asc = [...atBatRecords].reverse();
-            await saveAtBatSummaryAndClearRecords(summaryData, user, asc);
-        } catch (e) { Alert.alert("彙整失敗", e.message); throw e; }
+            // ✅ 取得目前所有球的 ID
+            const recordIds = rawRecords.map(r => r.id);
+
+            // 直接呼叫封裝好的 Firebase Service
+            // 確保 saveAtBatSummaryAndClearRecords 內部已經處理了 addDoc 邏輯
+            await saveAtBatSummaryAndClearRecords(finalPayload, user, recordIds);
+            return true;
+        } catch (e) { 
+            Alert.alert("彙整失敗", e.message); 
+            throw e; 
+        }
     };
 
     return { rawRecords, loading, handleSavePitch, handleDeletePitch, handleUpdatePitch, handleSaveSummary };

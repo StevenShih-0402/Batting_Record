@@ -5,6 +5,11 @@ import { useMemo } from 'react';
 export const useBaseballLogic = (rawRecords) => {
     // 使用 useMemo 確保只有當原始資料變動時才重新計算
     return useMemo(() => {
+        // 如果 rawRecords 不存在，直接回傳初始狀態，避免後續陣列操作崩潰
+        if (!rawRecords) {
+            return { atBatRecords: [], atBatStatus: { balls: 0, strikes: 0, isFinished: false, atBatRecordsCount: 0 } };
+        }
+        
         // 1. 排序：時間升序
         const sortedAsc = [...rawRecords].sort(
             (a, b) => (a.createdAt?.getTime() || 0) - (b.createdAt?.getTime() || 0)
@@ -48,7 +53,7 @@ export const useBaseballLogic = (rawRecords) => {
         const displayRecords = [...processed].reverse();
 
         return {
-            atBatRecords: displayRecords,
+            atBatRecords: displayRecords || [],
             atBatStatus: {
                 balls,
                 strikes,

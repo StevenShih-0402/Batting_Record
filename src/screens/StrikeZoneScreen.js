@@ -8,7 +8,7 @@ import { Feather as Icon } from '@expo/vector-icons';
 
 // 導入 Hook 與工具
 import useAtBatRecords from '../hooks/useAtBatRecords';
-import { useStrikeZoneUI } from '../hooks/ui/useStrikeZoneUI';
+import { useStrikeZoneUI } from '../hooks/useStrikeZoneUI';
 import { getColorByResult, COLOR_BALL, COLOR_STRIKE } from '../constants/Colors';
 import { Layout } from '../constants/Layout';
 
@@ -215,7 +215,7 @@ const StrikeZoneScreen = () => {
                 isVisible={ui.modals.end.visible}
                 onClose={() => ui.modals.end.set(false)}
                 onSave={handleSaveSummary}
-                atBatRecords={atBatRecords}
+                atBatRecords={atBatRecords || []}     // 確保即使 atBatRecords 還沒算出來，至少傳入空陣列 []
             />
         </SafeAreaView>
     );
