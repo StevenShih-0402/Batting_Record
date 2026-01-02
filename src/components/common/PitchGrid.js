@@ -3,7 +3,7 @@
 import React, { forwardRef } from 'react';
 import { View } from 'react-native';
 import { useTheme } from 'react-native-paper'; // 導入 useTheme
-import { GRID_CELL_SIZE } from '../../constants/GameConstants';
+import { GRID_CELL_SIZE, GRID_WIDTH_RATIO } from '../../constants/GameConstants';
 import { Layout } from '../../constants/Layout';
 
 /*
@@ -19,8 +19,8 @@ const PitchGrid = forwardRef(({ onLayout }, ref) => {
     
     // 九宮格的外部框線
     const gridStyle = {
-        width: Layout.WINDOW.WIDTH * 0.7, 
-        height: Layout.WINDOW.WIDTH * 0.7 * (4/3), 
+        width: Layout.WINDOW.WIDTH * GRID_WIDTH_RATIO, 
+        height: Layout.WINDOW.WIDTH * GRID_WIDTH_RATIO * (4/3), 
         borderWidth: 2,
         borderColor: theme.colors.outline,           // 使用主題的輪廓色 (Outline) 作為邊框
     };

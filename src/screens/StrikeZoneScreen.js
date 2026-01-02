@@ -19,7 +19,7 @@ import PitchInputModal from '../components/modals/PitchInputModal';
 import EndAtBatModal from '../components/modals/EndAtBatModal';
 import PitchEditModal from '../components/modals/PitchEditModal';
 import HistoryList from '../components/HistoryList';
-import PitchHistoryDots from '../components/PitchInputDots';
+import PitchHistoryDots from '../components/PitchHistoryDots';
 
 
 const StrikeZoneScreen = () => {
@@ -47,7 +47,7 @@ const StrikeZoneScreen = () => {
     });
     
     return (
-        <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right', 'bottom']}>
+        <SafeAreaView style={styles.safeArea} edges={['top']}>
             <View style={[styles.headerContainer, { backgroundColor: theme.colors.surface }] }>
                 <Text style={[styles.header, { color: theme.colors.primary }]}>
                     <Icon name="activity" size={24} color={theme.colors.primary} />
@@ -122,16 +122,35 @@ const StrikeZoneScreen = () => {
                         </View>
                     </View>
 
-                    {/* 核心顯示組件：球點歷史紀錄 (已封裝邏輯) */}
-                    <PitchHistoryDots 
-                        records={atBatRecords} 
-                        pitchZoneHeight={ui.layout.pitchZoneHeight} 
-                        gridLayout={ui.layout.gridLayout} 
-                    />
-
-                    {/* 九宮格主體 */}
-                    <View style={styles.gridOverlay}>
-                        <PitchGrid ref={ui.layout.gridRef} onLayout={ui.layout.handleGridLayout} />
+                    {/* B. 九宮格與歷史點：這部分是重點，它們會被 pitchZoneContainer 的 justifyContent: 'center' 置中 */}
+                    <View style={styles.centerContentWrapper}>
+                        {/* 確保九宮格渲染在這裡 */}
+                        <PitchGrid 
+                            ref={ui.layout.gridRef} 
+                            onLayout={(e) => {
+                                // 必須把 e 傳進去
+                                ui.layout.handleGridLayout(e);
+                                ui.layout.setPitchZoneHeight(e.nativeEvent.layout.height);
+                            }}
+                        />
+                        
+                        {/* 球點畫布 */}
+                        {ui.layout.gridLayout && (
+                            <View 
+                                style={{
+                                    position: 'absolute', // 覆蓋在 Grid 上
+                                    width: ui.layout.gridLayout.width,
+                                    height: ui.layout.gridLayout.height,
+                                }} 
+                                pointerEvents="none"
+                            >
+                                <PitchHistoryDots 
+                                    records={atBatRecords} 
+                                    pitchZoneHeight={ui.layout.pitchZoneHeight} 
+                                    gridLayout={ui.layout.gridLayout} 
+                                />
+                            </View>
+                        )}
                     </View>
                         
                 </View>
@@ -146,9 +165,9 @@ const StrikeZoneScreen = () => {
                         backgroundColor: theme.colors.surfaceVariant,
                         transform: [{ translateX: ui.drawer.anim }],
                         top: insets.top,
-                        bottom: insets.bottom,
+                        bottom: insets.bottom + 60,
                         width: Layout.WINDOW.WIDTH,
-                        height: Layout.WINDOW.HEIGHT - insets.top - insets.bottom 
+                        height: Layout.WINDOW.HEIGHT - insets.top - insets.bottom - 60
                     }
                 ]}
                 pointerEvents={ui.drawer.isOpen ? 'auto' : 'none'}
@@ -184,7 +203,7 @@ const StrikeZoneScreen = () => {
             {/* 懸浮抽屜按鈕 */}
             {!ui.drawer.isOpen && (
                 <TouchableOpacity
-                    style={[styles.toggleButton, { backgroundColor: theme.colors.primary, bottom: 15 + insets.bottom }]}
+                    style={[styles.toggleButton, { backgroundColor: theme.colors.primary, bottom: insets.bottom - 35}]}
                     onPress={ui.drawer.toggle}
                 >
                     <Icon name="menu" size={24} color={theme.colors.onPrimary} />
@@ -223,8 +242,7 @@ const StrikeZoneScreen = () => {
 
 const styles = StyleSheet.create({
     safeArea: {
-        flex: 1,
-        backgroundColor: '#f0f0f0',
+        flex: 1
     },
     headerContainer: {
         paddingVertical: 15,
@@ -244,21 +262,34 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     pitchZoneContainer: {
-        flex: 1,
-        minHeight: 300,
-        backgroundColor: 'black', 
+        flex: 1,                // 撐開 Header 之後的所有空間
+        justifyContent: 'center', // 【關鍵】垂直置中子元素
+        alignItems: 'center',     // 【關鍵】水平置中子元素
+        position: 'relative',
     },
     gridOverlay: {
+        // 確保九宮格在容器內絕對置中
         ...StyleSheet.absoluteFillObject,
         justifyContent: 'center', 
         alignItems: 'center',    
     },
     statusBar: {
+        position: 'absolute',    // 絕對定位在最頂端
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 10,
         flexDirection: 'row',
-        alignItems: 'center',
         paddingVertical: 10,
         paddingHorizontal: 16,
         borderBottomWidth: 1,
+        borderColor: '#333',
+    },
+    centerContentWrapper: {
+        // 這個容器會被父層 center 
+        alignItems: 'center',
+        justifyContent: 'center',
+        position: 'relative', // 確保子元素 absolute 定位以此為基準
     },
     indicatorGroup: {
         flexDirection: 'row',
@@ -338,12 +369,8 @@ const styles = StyleSheet.create({
         borderRadius: 25,
         justifyContent: 'center',
         alignItems: 'center',
-        zIndex: 30, 
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
-        elevation: 5,
+        zIndex: 30,
+        elevation: 6,
     },
     saveRecordButtonContainer: {
         padding: 16,

@@ -1,41 +1,29 @@
 // src/components/common/Dot.js
-// 球
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
 import { DOT_SIZE } from '../../constants/GameConstants';
 
-/* 
-input: 
-x: 球的 X 座標
-y: 球的 Y 座標
-color: 球的顏色
-pitchIndex:第幾顆球
-*/
-
 const Dot = ({ x, y, color, pitchIndex }) => {
     const theme = useTheme();
     
-    // 動態計算的樣式 (位置、大小、顏色) 保持在元件內部
+    // 動態樣式
     const dynamicStyle = {
-        left: x - DOT_SIZE / 2,             // 為了找到球的中心點
+        // 使用 left/top 配合父層的 absolute 畫布
+        left: x - DOT_SIZE / 2, 
         top: y - DOT_SIZE / 2, 
         width: DOT_SIZE, 
         height: DOT_SIZE, 
         borderRadius: DOT_SIZE / 2, 
         backgroundColor: color, 
-        
-        // 主題相關樣式
         borderColor: theme.colors.onSurfaceVariant,
     };
     
-    // 文字樣式也使用主題顏色
     const textStyle = {
-        color: theme.colors.background,
+        color: '#000000ff', // 通常球點文字用純白在深色或亮色球點上較清晰
     };
 
     return (
-        // 組合靜態樣式 (styles.dot) 和動態樣式 (dynamicStyle)
         <View style={[styles.dot, dynamicStyle]}> 
             <Text style={[styles.text, textStyle]}>
                 {pitchIndex}
@@ -44,23 +32,25 @@ const Dot = ({ x, y, color, pitchIndex }) => {
     );
 };
 
-export default Dot;
-
-// ----------------------------------------------------
-// 靜態樣式定義 (標準 Expo/RN 做法)
-// ----------------------------------------------------
 const styles = StyleSheet.create({
     dot: {
-        // 這些屬性是靜態的，與 props 或 theme 無關
-        position: 'absolute', 
+        position: 'absolute', // 關鍵：確保它在畫布容器內自由定位
         zIndex: 10,
         borderWidth: 2,
         justifyContent: 'center', 
         alignItems: 'center',
+        // 增加陰影防止球點在淺色背景消失
+        elevation: 4,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
     },
     text: {
-        // 文字的靜態屬性
-        fontSize: 14, 
+        fontSize: 12, // 稍微調小一點點確保兩位數球數不溢出
         fontWeight: 'bold',
+        textAlign: 'center',
     },
 });
+
+export default Dot;

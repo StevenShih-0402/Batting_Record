@@ -66,29 +66,56 @@ export const useStrikeZoneUI = ({ atBatStatus, handleSavePitch, handleUpdatePitc
     ).current;
 
     // --- 九宮格座標運算 ---
-    const handleGridLayout = useCallback(() => {
-        gridRef.current?.measure((fx, fy, width, height, px, py) => {
-            setGridLayout({ x: px, y: py, width, height });
+    const handleGridLayout = useCallback((event) => {
+        // 加上安全檢查，避免 event 為空時崩潰
+        if (!event || !event.nativeEvent) return;
+
+        const { width, height } = event.nativeEvent.layout;
+
+        // 使用更穩定的 measureInWindow
+        gridRef.current?.measureInWindow((x, y, w, h) => {
+            console.log("✅ 佈局成功取得:", { x, y, width, height });
+            
+            setGridLayout({
+                x: x,      // 絕對座標 X
+                y: y,      // 絕對座標 Y
+                width: width,
+                height: height
+            });
         });
     }, []);
 
     // --- 螢幕點擊事件 ---
     const handleScreenPress = useCallback((event) => {
+        console.log("螢幕點擊觸發");
+
         if (atBatStatus.isFinished) {
             Alert.alert("打席已結束", "請先儲存或刪除紀錄。");
             return;
         }
-
-        const { pageX, pageY } = event.nativeEvent;
-        if (gridLayout) {
+        
+        // 確保 gridLayout 存在且寬高不為 0，避免除以 0 的錯誤
+        if (gridLayout && gridLayout.width > 0 && gridLayout.height > 0) {
+            const { pageX, pageY } = event.nativeEvent;
+            console.log("點擊位置:", pageX, pageY);
+            console.log("目前 gridLayout:", gridLayout);
+            
+            // 1. 取得結果，裡面的 relX 已經是比例了
             const result = getCellNumber(pageX, pageY, gridLayout);
+            console.log("計算結果:", result);
+
             setSelectedCellInfo({
                 cellNumber: result.cellNumber,
                 isInside: result.isInside,
-                gridX: result.relX,
+                
+                gridX: result.relX, // 直接存入，不要再除一次
                 gridY: result.relY,
             });
             setIsPitchModalVisible(true);
+            console.log("Modal 開啟。");
+        }
+        else {
+            console.warn("gridLayout 尚未就緒");
         }
     }, [gridLayout, atBatStatus]);
 

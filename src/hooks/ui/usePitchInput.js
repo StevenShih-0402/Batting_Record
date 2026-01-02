@@ -53,8 +53,8 @@ export const usePitchInput = (isVisible, cellInfo, atBatStatus, onSave) => {
             result,
             speed: finalSpeed,
             cellNumber: cellInfo.cellNumber,
-            gridX: cellInfo.gridX ?? 0.5,
-            gridY: cellInfo.gridY ?? 0.5,
+            gridX: cellInfo.gridX, // 確保這兩行存在
+            gridY: cellInfo.gridY,
             note,
         };
 
