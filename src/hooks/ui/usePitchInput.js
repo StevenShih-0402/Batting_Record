@@ -1,4 +1,5 @@
-// hooks/usePitchInput.js
+// src/hooks/ui/usePitchInput.js
+// PitchInputModal 的狀態管理與業務邏輯
 import { useState, useEffect } from 'react';
 import { Alert } from 'react-native';
 import { PITCH_RESULTS, PITCH_TYPES_ZH } from '../../constants/GameConstants';

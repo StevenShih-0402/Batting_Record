@@ -1,4 +1,4 @@
-// hooks/ui/useEndAtBat.js
+// src/hooks/ui/useEndAtBat.js
 // EndAtBatModal 的狀態管理與業務邏輯
 import { useState, useEffect } from 'react';
 import { Alert } from 'react-native';

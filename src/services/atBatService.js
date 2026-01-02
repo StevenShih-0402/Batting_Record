@@ -1,8 +1,6 @@
 // src/services/atBatService.js
+// 將打席過程中的球點紀錄，轉換為最終儲存到資料庫的資料格式
 
-/**
- * 將打席過程中的球點紀錄轉換為最終儲存的格式
- */
 export const formatAtBatData = (note, records = []) => {
     const safeRecords = Array.isArray(records) ? records : [];
     

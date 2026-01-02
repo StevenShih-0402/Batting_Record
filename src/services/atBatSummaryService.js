@@ -1,11 +1,8 @@
 // src/services/atBatSummaryService.js
+// 按下「結束打席」的時候彙整紀錄的業務邏輯，包含 寫入總結 與 批量刪除原始逐球紀錄
 import { collection, addDoc, serverTimestamp, doc, writeBatch } from 'firebase/firestore';
 import { db, firebaseStatus } from './firebaseService';
 
-/**
- * 4. 按下「結束打席」的時候彙整紀錄
- * 包含：寫入總結、批量刪除原始逐球紀錄
- */
 export const saveAtBatSummaryAndClearRecords = async (summaryData, user, recordIds = []) => {
     // 在函式執行時才抓取路徑，避免循環依賴
     const pitchPath = firebaseStatus.PITCH_RECORDS_PATH;

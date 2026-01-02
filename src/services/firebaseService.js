@@ -1,4 +1,5 @@
 // src/services/firebaseService.js
+// Firebase 的初始化邏輯
 import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 import { initializeAuth, inMemoryPersistence } from 'firebase/auth';

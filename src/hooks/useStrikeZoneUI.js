@@ -1,4 +1,5 @@
 // src/hooks/useStrikeZoneUI.js
+// screen 裡面與前端元件互動較密切的邏輯
 import { useState, useRef, useCallback } from 'react';
 import { Animated, PanResponder, Alert } from 'react-native';
 import { Layout } from '../constants/Layout';

@@ -1,4 +1,4 @@
-// src/hooks/usePitchData.js
+// src/hooks/api/usePitchData.js
 // Firebase 的 CRUD，與彙整打席紀錄的資料庫操作
 import { useState, useEffect } from 'react';
 import { Alert } from 'react-native';

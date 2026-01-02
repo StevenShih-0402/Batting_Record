@@ -1,4 +1,5 @@
 // src/services/pitchService.js
+// Firebase 的身分驗證與球數 CRUD
 import { 
     collection, addDoc, query, onSnapshot, serverTimestamp, 
     deleteDoc, updateDoc, doc, orderBy 

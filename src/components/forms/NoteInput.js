@@ -1,4 +1,5 @@
 // src/components/forms/NoteInput.js
+// 表單的備註輸入框
 import React from 'react';
 import { StyleSheet } from 'react-native';
 import { TextInput, useTheme } from 'react-native-paper';

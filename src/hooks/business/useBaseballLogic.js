@@ -1,4 +1,4 @@
-// src/hooks/useBaseballLogic.js
+// src/hooks/business/useBaseballLogic.js
 // 棒球的球數判決業務邏輯 (ex. 三振、保送、界外的計算)
 import { useMemo } from 'react';
 

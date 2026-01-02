@@ -1,4 +1,4 @@
-// src/hooks/useAuth.js
+// src/hooks/auth/useAuth.js
 // 身分管理 (你是誰？你登入了沒？)
 import { useState, useEffect } from 'react';
 import { onAuthStateChanged, signInAnonymously } from 'firebase/auth';
