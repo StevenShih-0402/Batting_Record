@@ -1,3 +1,6 @@
+// src/screens/HistoryScreen.js
+// 讀取彙整後打席數據的介面
+
 import React from 'react';
 import { View, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -48,13 +51,36 @@ const HistoryScreen = () => {
 };
 
 const styles = StyleSheet.create({
-    safeArea: { flex: 1 },
-    centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    headerContainer: { paddingVertical: 15, alignItems: 'center', borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.1)' },
-    header: { fontSize: 24, fontWeight: 'bold' },
-    listContent: { padding: 16 },
-    card: { marginBottom: 12, elevation: 2 },
-    emptyText: { textAlign: 'center', marginTop: 50, color: '#888' }
+    safeArea: { 
+        flex: 1 
+    },
+    centered: { 
+        flex: 1, 
+        justifyContent: 'center', 
+        alignItems: 'center' 
+    },
+    headerContainer: {
+        paddingVertical: 15, 
+        alignItems: 'center', 
+        borderBottomWidth: 1, 
+        borderBottomColor: 'rgba(255,255,255,0.1)' 
+    },
+    header: { 
+        fontSize: 24, 
+        fontWeight: 'bold' 
+    },
+    listContent: { 
+        padding: 16 
+    },
+    card: { 
+        marginBottom: 12, 
+        elevation: 2 
+    },
+    emptyText: { 
+        textAlign: 'center', 
+        marginTop: 50, 
+        color: '#888' 
+    }
 });
 
 export default HistoryScreen;

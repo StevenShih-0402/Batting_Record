@@ -1,4 +1,5 @@
 // src/components/PitchHistoryDots.js
+// 邏輯元件，渲染九宮格上的歷史球點
 import React, { memo } from 'react';
 import Dot from './common/Dot';
 import { getColorByResult } from '../constants/Colors';

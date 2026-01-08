@@ -1,5 +1,5 @@
 // src/hooks/api/useHistoryData.js
-
+// 從 Firebase 讀取真實的打席彙整資料
 import { useState, useEffect } from 'react';
 import { getAtBatHistory } from '../../services/atBatSummaryService';
 import { getAuth } from 'firebase/auth';
