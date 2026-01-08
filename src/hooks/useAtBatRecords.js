@@ -21,9 +21,14 @@ const useAtBatRecords = () => {
 
     // 4. 在這裡加工要儲存的資料
     const handleSaveSummaryAction = async (uiData) => {
-        // uiData 是 { summaryNote: "..." }
-        const finalPayload = formatAtBatData(uiData.summaryNote, atBatRecords);
-        // 呼叫 API 層存入大禮包
+        // uiData 現在從 useEndAtBat 傳過來，會是 { atBatTitle: "...", summaryNote: "..." }
+        const { atBatTitle, summaryNote } = uiData;
+
+        // ✅ 修正點：將標題傳入 formatAtBatData
+        // 依照我們先前修改的 formatAtBatData(title, note, records)
+        const finalPayload = formatAtBatData(atBatTitle, summaryNote, atBatRecords);
+        
+        // 呼叫 API 層 (usePitchData) 存入彙整資料
         return await baseSaveSummary(finalPayload);
     };
 

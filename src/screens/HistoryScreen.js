@@ -36,9 +36,13 @@ const HistoryScreen = () => {
                 renderItem={({ item }) => (
                     <Card style={[styles.card, { backgroundColor: theme.colors.surfaceVariant }]}>
                         <List.Item
-                            title={`結果：${item.finalOutcome || '未完成'}`}
-                            titleStyle={{ color: theme.colors.onSurface, fontWeight: 'bold' }}
-                            description={`日期：${item.date} | 球數：${item.totalPitches}P`}
+                            title={item.atBatLabel || `打席結果：${item.finalOutcome}`}
+                            titleStyle={{ 
+                                color: theme.colors.primary, 
+                                fontWeight: 'bold',
+                                fontSize: 16 
+                            }}
+                            description={`${item.date} | ${item.totalPitches} 球 \n${item.summaryNote}`}
                             descriptionStyle={{ color: theme.colors.onSurfaceVariant }}
                             left={props => <List.Icon {...props} icon="calendar-check" color={theme.colors.primary} />}
                             right={props => <Icon name="chevron-right" size={20} color={theme.colors.onSurfaceVariant} style={{ alignSelf: 'center' }} />}

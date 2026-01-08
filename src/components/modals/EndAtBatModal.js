@@ -2,7 +2,7 @@
 // 儲存打席紀錄的彈窗
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Text, useTheme, Button, IconButton, Modal, Portal } from 'react-native-paper';
+import { Text, useTheme, TextInput, Button, IconButton, Modal, Portal } from 'react-native-paper';
 
 // 匯入表單元件
 import NoteInput from '../forms/NoteInput';
@@ -14,7 +14,7 @@ const EndAtBatModal = ({ isVisible, onClose, onSave, atBatRecords = [] }) => {
     const theme = useTheme();
     
     // 將邏輯委託給 Hook
-    const { summaryNote, setSummaryNote, isSaving, handleSave } = 
+    const { atBatTitle, setAtBatTitle, summaryNote, setSummaryNote, isSaving, handleSave } = 
         useEndAtBat(isVisible, atBatRecords, onSave, onClose);
 
     const strikes = atBatRecords.length > 0 ? atBatRecords[0].runningStrikes : 0;
@@ -31,6 +31,16 @@ const EndAtBatModal = ({ isVisible, onClose, onSave, atBatRecords = [] }) => {
                 <Text variant="bodyLarge" style={{marginBottom: 15}}>
                     當前球數: <Text style={{fontWeight: 'bold'}}>{strikes} 好 {balls} 壞</Text>
                 </Text>
+
+                {/* 標題輸入框 */}
+                <TextInput
+                    label="標題"
+                    placeholder="這是誰的打席?"
+                    value={atBatTitle}
+                    onChangeText={setAtBatTitle}
+                    mode="outlined"
+                    style={{ marginTop: 15, marginBottom: 10 }}
+                />
                 
                 <NoteInput 
                     label="總結備註"

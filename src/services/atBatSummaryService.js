@@ -10,7 +10,7 @@ export const saveAtBatSummaryAndClearRecords = async (summaryData, user, recordI
     const summaryPath = firebaseStatus.AT_BAT_SUMMARY_PATH;
     
     if (!user || !firebaseStatus.isReady) {
-        throw new Error("Database or User not ready.");
+        throw new Error("尚未登入，或是資料庫尚未準備就緒。");
     }
 
     // 1. 寫入彙整紀錄
