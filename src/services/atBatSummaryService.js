@@ -1,6 +1,6 @@
 // src/services/atBatSummaryService.js
 // 按下「結束打席」的時候彙整紀錄的業務邏輯，包含 寫入總結 與 批量刪除原始逐球紀錄
-import { collection, addDoc, serverTimestamp, doc, writeBatch, query, where, orderBy, onSnapshot } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, deleteDoc, serverTimestamp, doc, writeBatch, query, where, orderBy, onSnapshot } from 'firebase/firestore';
 import { db, firebaseStatus } from './firebaseService';
 
 // ---- StrikeZoonScreen ----
@@ -91,4 +91,39 @@ export const getAtBatHistory = (userId, setRecordsCallback, setLoadingCallback) 
     });
 
     return unsubscribe;
+};
+
+// 刪除整筆打席紀錄
+export const deleteAtBatSummary = async (docId) => {
+    try {
+        const docRef = doc(db, firebaseStatus.AT_BAT_SUMMARY_PATH, docId);
+        await deleteDoc(docRef);
+        console.log(`打席紀錄 ${docId} 已刪除`);
+    } catch (error) {
+        console.error("刪除打席失敗:", error);
+        throw error;
+    }
+};
+
+// 更新打席紀錄 (用於刪除或修改內部的單顆球)
+// 我們直接把修改好的 pitchRecords 陣列整包傳進來覆蓋
+export const updateAtBatSummaryPitches = async (docId, newPitchRecords) => {
+    try {
+        const docRef = doc(db, firebaseStatus.AT_BAT_SUMMARY_PATH, docId);
+        
+        // 重新計算總球數
+        const totalPitches = newPitchRecords.length;
+        
+        // 這裡可以選擇是否要重新計算 finalOutcome，但邏輯較複雜
+        // 目前先單純更新球的列表與總數
+        await updateDoc(docRef, {
+            pitchRecords: newPitchRecords,
+            totalPitches: totalPitches,
+            updatedAt: new Date() // 標記更新時間
+        });
+        console.log(`打席紀錄 ${docId} 的球數已更新`);
+    } catch (error) {
+        console.error("更新打席內容失敗:", error);
+        throw error;
+    }
 };
