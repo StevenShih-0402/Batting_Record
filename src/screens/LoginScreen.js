@@ -16,6 +16,10 @@ const LoginScreen = () => {
         try {
             await signInWithGoogle();
             // 登入成功後，App.js 的 onAuthStateChanged 會自動切換頁面，不用 navigation.navigate
+            // 【關鍵修正 1】：升級成功後，雖然會自動跳轉，
+            // 但為了保險，我們在這裡手動把 loading 關掉
+            // 如果 App.js 沒自動切換頁面，至少按鈕會回來，不會死在那邊
+            setLoading(false);
         } catch (error) {
             Alert.alert("登入失敗", error.message);
             setLoading(false);
@@ -38,17 +42,14 @@ const LoginScreen = () => {
                 {/* 這裡可以放你的 App Logo，現在先用 Icon 代替 */}
                 <MaterialCommunityIcons name="baseball" size={100} color={theme.colors.primary} />
                 <Text variant="displaySmall" style={{ color: theme.colors.onSurface, fontWeight: 'bold', marginTop: 20 }}>
-                    Strike Zone
+                    登入
                 </Text>
                 <Text variant="bodyLarge" style={{ color: theme.colors.onSurfaceVariant, marginTop: 10 }}>
-                    專業棒球紀錄助手
+                    Login
                 </Text>
             </View>
 
             <Surface style={[styles.loginCard, { backgroundColor: theme.colors.surface }]} elevation={4}>
-                <Text variant="titleMedium" style={{ marginBottom: 20, textAlign: 'center', color: theme.colors.onSurface }}>
-                    請選擇登入方式
-                </Text>
 
                 {loading ? (
                     <ActivityIndicator animating={true} color={theme.colors.primary} size="large" style={{ margin: 20 }} />

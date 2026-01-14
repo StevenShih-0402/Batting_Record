@@ -1,7 +1,8 @@
 // App.js
 import React from 'react';
+import { TouchableOpacity, View } from 'react-native';
 import { SafeAreaProvider, initialWindowMetrics, useSafeAreaInsets } from 'react-native-safe-area-context'; 
-import { Provider as PaperProvider } from 'react-native-paper'; 
+import { Provider as PaperProvider, Avatar } from 'react-native-paper'; 
 import { NavigationContainer, DarkTheme as NavigationDarkTheme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Feather as Icon } from '@expo/vector-icons';
@@ -11,6 +12,7 @@ import HistoryScreen from './src/screens/HistoryScreen';
 import customTheme from './src/theme/PaperTheme'; 
 
 import LoginScreen from './src/screens/LoginScreen';
+import ProfileScreen from './src/screens/ProfileScreen';
 import { useAuth } from './src/hooks/auth/useAuth';
 
 const Tab = createBottomTabNavigator();
@@ -27,6 +29,7 @@ const CombinedDarkTheme = {
 
 const MainTabs = () => {
     const insets = useSafeAreaInsets();
+    const { user } = useAuth(); // 確保這裡有取得 user 狀態
 
     return (
         <Tab.Navigator
@@ -38,16 +41,13 @@ const MainTabs = () => {
                 tabBarActiveTintColor: customTheme.colors.primary,
                 tabBarInactiveTintColor: 'gray',
                 headerShown: false,
-                
-                // 【關鍵 1】移除 Screen 容器的預設樣式
                 sceneContainerStyle: { backgroundColor: customTheme.colors.background },
-                
                 tabBarStyle: {
                     backgroundColor: customTheme.colors.surface,
                     borderTopWidth: 0,
-                    elevation: 0,        // 移除陰影以減少與 Screen 之間的視覺斷層
-                    height: 70 + insets.bottom, 
-                    paddingBottom: insets.bottom > 0 ? insets.bottom : 10,
+                    elevation: 8,       // 恢復一點陰影讓導覽列跟內容有區隔
+                    height: 65 + insets.bottom, 
+                    paddingBottom: insets.bottom > 0 ? insets.bottom : 8,
                     paddingTop: 8,
                 },
                 tabBarLabelStyle: {
@@ -61,10 +61,53 @@ const MainTabs = () => {
                 component={StrikeZoneScreen} 
                 options={{ title: '數據輸入' }}
             />
+
+            <Tab.Screen 
+                name="Profile" 
+                component={ProfileScreen} 
+                options={{ 
+                    title: '個人中心',
+                    tabBarIcon: ({ focused }) => {
+                        // 如果有 Google 頭貼
+                        if (user?.photoURL) {
+                            return (
+                                <Avatar.Image 
+                                    size={28} 
+                                    source={{ uri: user.photoURL }} 
+                                    style={{ 
+                                        backgroundColor: '#333',
+                                    }}
+                                />
+                            );
+                        }
+                        // 預設 Icon
+                        return (
+                            <Avatar.Icon 
+                                size={28} 
+                                icon="account" 
+                                style={{ 
+                                    backgroundColor: focused ? customTheme.colors.primary : '#333',
+                                }} 
+                            />
+                        );
+                    },
+                    // 移除自定義 tabBarButton，回歸原生配置以徹底解決「歪掉」的問題
+                }}
+            />
+
             <Tab.Screen 
                 name="History" 
                 component={HistoryScreen} 
                 options={{ title: '紀錄查詢' }}
+            />
+
+            <Tab.Screen 
+                name="Login" 
+                component={LoginScreen} 
+                options={{ 
+                    tabBarButton: () => null, 
+                    tabBarItemStyle: { display: 'none' } // 徹底隱藏佔位
+                }} 
             />
         </Tab.Navigator>
     );
