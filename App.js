@@ -10,6 +10,9 @@ import StrikeZoneScreen from './src/screens/StrikeZoneScreen';
 import HistoryScreen from './src/screens/HistoryScreen'; 
 import customTheme from './src/theme/PaperTheme'; 
 
+import LoginScreen from './src/screens/LoginScreen';
+import { useAuth } from './src/hooks/auth/useAuth';
+
 const Tab = createBottomTabNavigator();
 
 // 讓 React Navigation 的底層顏色也遵循我們的深色主題
@@ -68,12 +71,29 @@ const MainTabs = () => {
 };
 
 const App = () => {
+
+    // 使用你原本寫好的 useAuth，這裡不用動，因為它監聽 onAuthStateChanged
+    const { user, isReady } = useAuth(); 
+
+    // 等待 Firebase 初始化時的畫面
+    if (!isReady) {
+        return null; // 或者回傳一個 Splash Screen
+    }
+
     return (
         <SafeAreaProvider initialMetrics={initialWindowMetrics}>            
             <PaperProvider theme={customTheme}>
                 {/* 【關鍵 2】將合併後的主題傳給 NavigationContainer */}
                 <NavigationContainer theme={CombinedDarkTheme}>
-                    <MainTabs />
+                    {/* 邏輯判斷：
+                        有 User -> 進入主程式 (MainTabs)
+                        沒 User -> 進入登入頁 (LoginScreen)
+                        
+                        *注意：因為我們在 authService 做了綁定邏輯，
+                        當使用者從 LoginScreen 登入後，user 狀態會變更，
+                        React 會自動重新渲染這裡，跳轉到 MainTabs。
+                    */}
+                    {user ? <MainTabs /> : <LoginScreen />}
                 </NavigationContainer>
             </PaperProvider>
         </SafeAreaProvider>

@@ -1,3 +1,6 @@
+// src/components/modals/HistoryDataModal.js
+// 顯示彙整資料詳細資訊 (迷你九宮格) 的彈窗
+
 import React, { useState, useEffect } from 'react';
 import { View, ScrollView, StyleSheet, Alert } from 'react-native';
 import { Modal, Portal, Text, Button, IconButton, useTheme, Divider, Surface } from 'react-native-paper';
@@ -112,10 +115,10 @@ const HistoryDataModal = ({ visible, onClose, record, onDeleteAtBat, onUpdatePit
                 
                 {/* 標題列 */}
                 <View style={styles.header}>
-                    <Text variant="titleLarge" style={{ color: theme.colors.primary, fontWeight: 'bold' }}>
+                    <Text variant="titleLarge" style={{ color: theme.colors.primary, fontWeight: 'bold', flex: 1, padding: 5}}>
                         {record.atBatLabel || '打席詳情'}
                     </Text>
-                    <IconButton icon="close" iconColor={theme.colors.onSurface} onPress={onClose} />
+                    <IconButton icon="close" iconColor={theme.colors.onSurface} size={24} onPress={onClose} />
                 </View>
 
                 <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -204,9 +207,11 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        padding: 15,
+        paddingHorizontal: 16,
+        paddingVertical: 8,
         borderBottomWidth: 1,
         borderBottomColor: '#333',
+        width: '100%', // 確保 header 撐滿 Modal 寬度
     },
     scrollContent: {
         paddingBottom: 20,

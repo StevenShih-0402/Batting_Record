@@ -1,32 +1,27 @@
 // src/services/firebaseService.js
 // Firebase 的初始化邏輯
-import { initializeApp } from 'firebase/app';
+import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
-import { initializeAuth, inMemoryPersistence } from 'firebase/auth';
+import { initializeAuth, getReactNativePersistence } from 'firebase/auth';
+import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
 import { firebaseConfig, PITCH_RECORDS_PATH, AT_BAT_SUMMARY_PATH } from '../config/firebaseConfig';
 
-let firebaseApp, auth, db;
+// 確保不重複初始化
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
-try {
-    firebaseApp = initializeApp(firebaseConfig);
-    auth = initializeAuth(firebaseApp, {
-        persistence: inMemoryPersistence 
-    });
-    db = getFirestore(firebaseApp);
-} catch (e) {
-    console.error("Firebase Initialization Error:", e.message);
-    // 降級處理：提供假物件防止閃退
-    auth = { onAuthStateChanged: (cb) => { cb(null); return () => {}; }, currentUser: null };
-    db = { app: null }; 
-}
+// 使用 AsyncStorage 讓登入狀態可以持久保存 (這才是你要的長期登入)
+const auth = initializeAuth(app, {
+    persistence: getReactNativePersistence(ReactNativeAsyncStorage)
+});
 
-// 初始化狀態與路徑導出
+const db = getFirestore(app);
+
+// 路徑與狀態導出
 export const firebaseStatus = {
-    isReady: !!db.app,
-    auth: auth,
-    db: db,
+    isReady: true,
     PITCH_RECORDS_PATH,
     AT_BAT_SUMMARY_PATH,
 };
 
+// 直接匯出實例
 export { auth, db };
