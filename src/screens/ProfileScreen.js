@@ -48,27 +48,44 @@ const ProfileScreen = ({ navigation }) => {
             <Divider />
 
             <List.Section style={styles.listSection}>
+                {/* 1. 訪客專屬：顯示登入/綁定按鈕 */}
                 {user?.isAnonymous && (
                     <List.Item
-                        title="綁定 Google 帳戶"
-                        description="同步數據，更換手機不遺失紀錄"
-                        left={props => <List.Icon {...props} icon="google" color="#4285F4" />}
+                        title="登入 / 註冊帳戶"
+                        description="綁定後可啟用雲端同步與編輯功能"
+                        left={props => <List.Icon {...props} icon="login" color="#4285F4" />}
                         onPress={() => navigation.navigate('Login')}
                         titleStyle={{ color: theme.colors.primary, fontWeight: 'bold' }}
                     />
                 )}
                 
-                <List.Item
-                    title="編輯個人資料"
-                    left={props => <List.Icon {...props} icon="account-edit" />}
-                    onPress={() => Alert.alert("開發中")}
-                />
+                {/* 2. 正式用戶專屬：顯示編輯與登出 */}
+                {!user?.isAnonymous && (
+                    <>
+                        <List.Item
+                            title="編輯個人資料"
+                            description="修改頭貼、名稱與帳號設定"
+                            left={props => <List.Icon {...props} icon="account-edit" />}
+                            onPress={() => navigation.navigate('EditProfile')}
+                        />
+                         
+                         {/* 可以在這裡顯示 Email 驗證狀態 */}
+                         {!user?.emailVerified && (
+                             <List.Item
+                                title="驗證電子郵件"
+                                titleStyle={{ color: theme.colors.error }}
+                                left={props => <List.Icon {...props} icon="email-alert" color={theme.colors.error} />}
+                                onPress={() => Alert.alert("提示", "已發送驗證信至您的信箱")}
+                             />
+                         )}
 
-                <List.Item
-                    title="登出"
-                    left={props => <List.Icon {...props} icon="logout" color={theme.colors.error} />}
-                    onPress={handleLogout}
-                />
+                        <List.Item
+                            title="登出"
+                            left={props => <List.Icon {...props} icon="logout" color={theme.colors.error} />}
+                            onPress={handleLogout}
+                        />
+                    </>
+                )}
             </List.Section>
         </View>
     );

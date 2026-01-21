@@ -5,7 +5,9 @@ import {
     GoogleAuthProvider, 
     signInWithCredential, 
     linkWithCredential, 
-    signInAnonymously 
+    signInAnonymously,
+    createUserWithEmailAndPassword,  // 信箱登入
+    signInWithEmailAndPassword,      // 信箱登入 
 } from 'firebase/auth';
 import { auth } from './firebaseService'; //
 
@@ -68,6 +70,32 @@ export const signOutUser = async () => {
         await auth.signOut();         // 清除 Firebase 狀態
     } catch (error) {
         console.error("Sign Out Error:", error);
+    }
+};
+
+// 1. Email 註冊
+export const signUpWithEmail = async (email, password) => {
+    try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        return userCredential.user;
+    } catch (error) {
+        // 可以把 Firebase 醜醜的錯誤代碼轉成中文
+        if (error.code === 'auth/email-already-in-use') throw new Error('此 Email 已被註冊');
+        if (error.code === 'auth/weak-password') throw new Error('密碼強度不足');
+        if (error.code === 'auth/invalid-email') throw new Error('Email 格式錯誤');
+        throw error;
+    }
+};
+
+// 2. Email 登入
+export const signInWithEmail = async (email, password) => {
+    try {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        return userCredential.user;
+    } catch (error) {
+        if (error.code === 'auth/user-not-found') throw new Error('找不到此帳號');
+        if (error.code === 'auth/wrong-password') throw new Error('密碼錯誤');
+        throw error;
     }
 };
 

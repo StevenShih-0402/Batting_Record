@@ -1,10 +1,10 @@
 // App.js
 import React from 'react';
-import { TouchableOpacity, View } from 'react-native';
 import { SafeAreaProvider, initialWindowMetrics, useSafeAreaInsets } from 'react-native-safe-area-context'; 
 import { Provider as PaperProvider, Avatar } from 'react-native-paper'; 
 import { NavigationContainer, DarkTheme as NavigationDarkTheme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createNativeStackNavigator } from '@react-navigation/native-stack'; // 1. 匯入 Stack
 import { Feather as Icon } from '@expo/vector-icons';
 
 import StrikeZoneScreen from './src/screens/StrikeZoneScreen';
@@ -15,7 +15,10 @@ import LoginScreen from './src/screens/LoginScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import { useAuth } from './src/hooks/auth/useAuth';
 
+import EditProfileScreen from './src/screens/EditProfileScreen';
+
 const Tab = createBottomTabNavigator();
+const Stack = createNativeStackNavigator(); // 2. 建立 Stack 實例
 
 // 讓 React Navigation 的底層顏色也遵循我們的深色主題
 const CombinedDarkTheme = {
@@ -27,9 +30,9 @@ const CombinedDarkTheme = {
   },
 };
 
-const MainTabs = () => {
+// MainTabs 現在接收 user 作為 props，由 App.js 傳入
+const MainTabs = ({ user }) => {
     const insets = useSafeAreaInsets();
-    const { user } = useAuth(); // 確保這裡有取得 user 狀態
 
     return (
         <Tab.Navigator
@@ -45,98 +48,84 @@ const MainTabs = () => {
                 tabBarStyle: {
                     backgroundColor: customTheme.colors.surface,
                     borderTopWidth: 0,
-                    elevation: 8,       // 恢復一點陰影讓導覽列跟內容有區隔
+                    elevation: 8,
                     height: 65 + insets.bottom, 
                     paddingBottom: insets.bottom > 0 ? insets.bottom : 8,
                     paddingTop: 8,
                 },
-                tabBarLabelStyle: {
-                    fontSize: 12,
-                    fontWeight: '500',
-                }
             })}
         >
-            <Tab.Screen 
-                name="Record" 
-                component={StrikeZoneScreen} 
-                options={{ title: '數據輸入' }}
-            />
-
+            <Tab.Screen name="Record" component={StrikeZoneScreen} options={{ title: '數據輸入' }} />
             <Tab.Screen 
                 name="Profile" 
                 component={ProfileScreen} 
                 options={{ 
                     title: '個人中心',
                     tabBarIcon: ({ focused }) => {
-                        // 如果有 Google 頭貼
                         if (user?.photoURL) {
-                            return (
-                                <Avatar.Image 
-                                    size={28} 
-                                    source={{ uri: user.photoURL }} 
-                                    style={{ 
-                                        backgroundColor: '#333',
-                                    }}
-                                />
-                            );
+                            return <Avatar.Image size={28} source={{ uri: user.photoURL }} />;
                         }
-                        // 預設 Icon
                         return (
                             <Avatar.Icon 
                                 size={28} 
                                 icon="account" 
-                                style={{ 
-                                    backgroundColor: focused ? customTheme.colors.primary : '#333',
-                                }} 
+                                style={{ backgroundColor: focused ? customTheme.colors.primary : '#333' }} 
                             />
                         );
                     },
-                    // 移除自定義 tabBarButton，回歸原生配置以徹底解決「歪掉」的問題
                 }}
             />
-
-            <Tab.Screen 
-                name="History" 
-                component={HistoryScreen} 
-                options={{ title: '紀錄查詢' }}
-            />
-
-            <Tab.Screen 
-                name="Login" 
-                component={LoginScreen} 
-                options={{ 
-                    tabBarButton: () => null, 
-                    tabBarItemStyle: { display: 'none' } // 徹底隱藏佔位
-                }} 
-            />
+            <Tab.Screen name="History" component={HistoryScreen} options={{ title: '紀錄查詢' }} />
         </Tab.Navigator>
     );
 };
 
 const App = () => {
-
-    // 使用你原本寫好的 useAuth，這裡不用動，因為它監聽 onAuthStateChanged
     const { user, isReady } = useAuth(); 
 
-    // 等待 Firebase 初始化時的畫面
-    if (!isReady) {
-        return null; // 或者回傳一個 Splash Screen
-    }
+    if (!isReady) return null; 
 
     return (
         <SafeAreaProvider initialMetrics={initialWindowMetrics}>            
             <PaperProvider theme={customTheme}>
-                {/* 【關鍵 2】將合併後的主題傳給 NavigationContainer */}
                 <NavigationContainer theme={CombinedDarkTheme}>
-                    {/* 邏輯判斷：
-                        有 User -> 進入主程式 (MainTabs)
-                        沒 User -> 進入登入頁 (LoginScreen)
-                        
-                        *注意：因為我們在 authService 做了綁定邏輯，
-                        當使用者從 LoginScreen 登入後，user 狀態會變更，
-                        React 會自動重新渲染這裡，跳轉到 MainTabs。
-                    */}
-                    {user ? <MainTabs /> : <LoginScreen />}
+                    <Stack.Navigator screenOptions={{ headerShown: false }}>
+                        {user ? (
+                            // --- 已登入或訪客狀態 ---
+                            <>
+                                <Stack.Screen name="MainTabs">
+                                    {(props) => <MainTabs {...props} user={user} />}
+                                </Stack.Screen>
+                                
+                                {/* 如果是訪客，我們把 Login 加入路由表，讓 Profile 可以 navigate 到它 */}
+                                {user.isAnonymous && (
+                                    <Stack.Screen 
+                                        name="Login" 
+                                        component={LoginScreen} 
+                                        options={{ 
+                                            presentation: 'modal', // 下方滑入效果
+                                            headerShown: true, 
+                                            title: '帳號綁定',
+                                            headerStyle: { backgroundColor: customTheme.colors.surface },
+                                            headerTintColor: customTheme.colors.onSurface,
+                                        }} 
+                                    />
+                                )}
+
+                                {/* 只有登入用戶(非訪客)才能進入編輯頁面，雖然 ProfileScreen 會擋，但這裡也加上判斷較保險 */}
+                                {!user.isAnonymous && (
+                                    <Stack.Screen 
+                                        name="EditProfile" 
+                                        component={EditProfileScreen} 
+                                        options={{ title: '編輯個人資料' }} 
+                                    />
+                                )}
+                            </>
+                        ) : (
+                            // --- 完全未登入狀態 ---
+                            <Stack.Screen name="Login" component={LoginScreen} />
+                        )}
+                    </Stack.Navigator>
                 </NavigationContainer>
             </PaperProvider>
         </SafeAreaProvider>
