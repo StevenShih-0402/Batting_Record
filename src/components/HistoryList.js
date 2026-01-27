@@ -1,5 +1,5 @@
 // src/components/HistoryList.js
-// 邏輯組件，顯示逐球紀錄的側邊選單紀錄列
+// 邏輯元件，顯示逐球紀錄的側邊選單紀錄列
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { TouchableRipple, Text, useTheme } from 'react-native-paper';

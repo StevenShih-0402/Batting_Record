@@ -5,11 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { View, ScrollView, StyleSheet, Alert } from 'react-native';
 import { Modal, Portal, Text, Button, IconButton, useTheme, Divider, Surface } from 'react-native-paper';
 import { getColorByResult } from '../../constants/Colors';
-
-// 迷你九宮格的尺寸配置
-const MINI_ZONE_WIDTH = 200;
-const MINI_ZONE_HEIGHT = 250; 
-const BALL_SIZE = 24; // 球的大小
+import MiniPitchZone from '../common/MiniPitchZone';
 
 const HistoryDataModal = ({ visible, onClose, record, onDeleteAtBat, onUpdatePitches }) => {
     const theme = useTheme();
@@ -27,9 +23,9 @@ const HistoryDataModal = ({ visible, onClose, record, onDeleteAtBat, onUpdatePit
     const handleDeleteSinglePitch = (index) => {
         Alert.alert("刪除球點", "確定要刪除這顆球嗎？", [
             { text: "取消", style: "cancel" },
-            { 
-                text: "刪除", 
-                style: "destructive", 
+            {
+                text: "刪除",
+                style: "destructive",
                 onPress: async () => {
                     const newPitches = [...localPitches];
                     newPitches.splice(index, 1);
@@ -44,9 +40,9 @@ const HistoryDataModal = ({ visible, onClose, record, onDeleteAtBat, onUpdatePit
     const handleDeleteWholeRecord = () => {
         Alert.alert("刪除整筆紀錄", "確定要刪除這個打席的所有資料嗎？", [
             { text: "取消", style: "cancel" },
-            { 
-                text: "確認刪除", 
-                style: "destructive", 
+            {
+                text: "確認刪除",
+                style: "destructive",
                 onPress: async () => {
                     await onDeleteAtBat(record.id);
                     onClose();
@@ -66,11 +62,11 @@ const HistoryDataModal = ({ visible, onClose, record, onDeleteAtBat, onUpdatePit
             <Surface key={index} style={[styles.rowContainer, { backgroundColor: theme.colors.surfaceVariant }]} elevation={1}>
                 {/* 左側顏色條指示器 (維持原狀) */}
                 <View style={[styles.indicatorBar, { backgroundColor: color }]} />
-                
+
                 <View style={styles.rowContent}>
                     {/* 左側大容器：改為垂直佈局 */}
                     <View style={styles.leftMainContainer}>
-                        
+
                         {/* 上層：球號與球速 */}
                         <View style={styles.upperSection}>
                             <View style={styles.pitchNumberBadge}>
@@ -97,8 +93,8 @@ const HistoryDataModal = ({ visible, onClose, record, onDeleteAtBat, onUpdatePit
 
                     {/* 右側：刪除按鈕 */}
                     <View style={styles.rightActionContainer}>
-                        <IconButton 
-                            icon="delete-outline" 
+                        <IconButton
+                            icon="delete-outline"
                             iconColor={theme.colors.error}
                             size={22}
                             onPress={() => handleDeleteSinglePitch(index)}
@@ -112,60 +108,19 @@ const HistoryDataModal = ({ visible, onClose, record, onDeleteAtBat, onUpdatePit
     return (
         <Portal>
             <Modal visible={visible} onDismiss={onClose} contentContainerStyle={[styles.container, { backgroundColor: theme.colors.background }]}>
-                
+
                 {/* 標題列 */}
                 <View style={styles.header}>
-                    <Text variant="titleLarge" style={{ color: theme.colors.primary, fontWeight: 'bold', flex: 1, padding: 5}}>
+                    <Text variant="titleLarge" style={{ color: theme.colors.primary, fontWeight: 'bold', flex: 1, padding: 5 }}>
                         {record.atBatLabel || '打席詳情'}
                     </Text>
                     <IconButton icon="close" iconColor={theme.colors.onSurface} size={24} onPress={onClose} />
                 </View>
 
                 <ScrollView contentContainerStyle={styles.scrollContent}>
-                    
+
                     {/* --- 迷你九宮格區域 --- */}
-                    {/* 增加 paddingVertical 讓出界的球不會被卡住 */}
-                    <View style={styles.zoneWrapper}>
-                        <View style={[
-                            styles.miniZone, 
-                            { 
-                                width: MINI_ZONE_WIDTH, 
-                                height: MINI_ZONE_HEIGHT,
-                                borderColor: theme.colors.outline 
-                            }
-                        ]}>
-                            {/* 1. 先畫格線 (背景層) */}
-                            <View style={[styles.gridLineH, { top: MINI_ZONE_HEIGHT * 0.33, backgroundColor: theme.colors.onSurfaceVariant }]} />
-                            <View style={[styles.gridLineH, { top: MINI_ZONE_HEIGHT * 0.66, backgroundColor: theme.colors.onSurfaceVariant }]} />
-                            <View style={[styles.gridLineV, { left: MINI_ZONE_WIDTH * 0.33, backgroundColor: theme.colors.onSurfaceVariant }]} />
-                            <View style={[styles.gridLineV, { left: MINI_ZONE_WIDTH * 0.66, backgroundColor: theme.colors.onSurfaceVariant }]} />
-
-                            {/* 2. 再畫球 (前景層) */}
-                            {localPitches.map((pitch, index) => {
-                                const x = pitch.gridX * MINI_ZONE_WIDTH;
-                                const y = pitch.gridY * MINI_ZONE_HEIGHT;
-                                const color = getColorByResult(pitch.result);
-                                const pitchNumber = localPitches.length - index;
-
-                                return (
-                                    <View 
-                                        key={index}
-                                        style={[
-                                            styles.ball,
-                                            {
-                                                left: x - (BALL_SIZE / 2),
-                                                top: y - (BALL_SIZE / 2),
-                                                backgroundColor: color,
-                                                borderColor: theme.colors.surface, // 給球加一個與背景同色的邊框，增加對比
-                                            }
-                                        ]}
-                                    >
-                                        <Text style={styles.ballText}>{pitchNumber}</Text>
-                                    </View>
-                                );
-                            })}
-                        </View>
-                    </View>
+                    <MiniPitchZone pitches={localPitches} />
 
                     <Divider style={{ marginVertical: 15 }} />
 
@@ -181,9 +136,9 @@ const HistoryDataModal = ({ visible, onClose, record, onDeleteAtBat, onUpdatePit
 
                 {/* 底部動作列 */}
                 <View style={[styles.footer, { borderTopColor: theme.colors.surfaceVariant, fontWeight: 'bold' }]}>
-                     <Button 
-                        mode="contained" 
-                        buttonColor={theme.colors.error} 
+                    <Button
+                        mode="contained"
+                        buttonColor={theme.colors.error}
                         icon="delete"
                         onPress={handleDeleteWholeRecord}
                     >
@@ -224,13 +179,13 @@ const styles = StyleSheet.create({
     },
     miniZone: {
         borderWidth: 2,
-        position: 'relative', 
+        position: 'relative',
         // 關鍵修正：移除 overflow: hidden，讓壞球可以顯示在框框外
         // backgroundColor: 'rgba(255,255,255,0.05)', // 可選：給好球帶一點點背景色
     },
     gridLineH: { position: 'absolute', height: 1, width: '100%', zIndex: 0 },
     gridLineV: { position: 'absolute', width: 1, height: '100%', zIndex: 0 },
-    
+
     // 球的樣式
     ball: {
         position: 'absolute',
@@ -252,7 +207,7 @@ const styles = StyleSheet.create({
         color: '#000',
         fontWeight: '900',
     },
-    
+
     // 列表樣式
     rowContainer: {
         borderRadius: 8,

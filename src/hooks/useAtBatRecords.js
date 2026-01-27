@@ -4,16 +4,16 @@ import { useAuth } from './auth/useAuth';
 import { usePitchData } from './api/usePitchData';
 import { useBaseballLogic } from './business/useBaseballLogic';
 
-import { formatAtBatData } from '../services/atBatService';
+import { formatAtBatData } from '../utils/AtBatUtils';
 
 const useAtBatRecords = () => {
     // 1. 處理身分
     const { user, isReady: authReady } = useAuth();
 
     // 2. 處理原始數據與 CRUD
-    const { 
-        rawRecords, loading, 
-        handleSavePitch, handleDeletePitch, handleUpdatePitch, handleSaveSummary: baseSaveSummary 
+    const {
+        rawRecords, loading,
+        handleSavePitch, handleDeletePitch, handleUpdatePitch, handleSaveSummary: baseSaveSummary
     } = usePitchData(user, authReady);
 
     // 3. 注入棒球邏輯計算 (傳入原始資料，得到算好的結果)
@@ -27,7 +27,7 @@ const useAtBatRecords = () => {
         // ✅ 修正點：將標題傳入 formatAtBatData
         // 依照我們先前修改的 formatAtBatData(title, note, records)
         const finalPayload = formatAtBatData(atBatTitle, summaryNote, atBatRecords);
-        
+
         // 呼叫 API 層 (usePitchData) 存入彙整資料
         return await baseSaveSummary(finalPayload);
     };
