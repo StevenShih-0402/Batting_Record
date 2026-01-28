@@ -5,7 +5,7 @@ import {
     signInAsGuest,
     signInWithEmail,
     signUpWithEmail,
-} from '../services/authService';
+} from '../../services/authService';
 
 export const useLogin = () => {
     const [loading, setLoading] = useState(false);

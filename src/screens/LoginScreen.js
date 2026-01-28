@@ -14,10 +14,11 @@ const LoginScreen = ({ navigation }) => {
         isLoginMode, setIsLoginMode, showPassword, setShowPassword
     } = state;
 
-    const SocialButton = ({ icon, color, onPress }) => (
+    const SocialButton = ({ icon, color, onPress, testID }) => (
         <TouchableOpacity
             onPress={onPress}
             style={[styles.socialBtn, { borderColor: theme.colors.outline }]}
+            testID={testID}
         >
             <MaterialCommunityIcons name={icon} size={28} color={color} />
         </TouchableOpacity>
@@ -82,6 +83,7 @@ const LoginScreen = ({ navigation }) => {
                         icon="google"
                         color="#DB4437"
                         onPress={() => actions.handleSocialLogin('Google', actions.signInWithGoogle)}
+                        testID="google-login-btn"
                     />
                 </View>
             </Surface>
