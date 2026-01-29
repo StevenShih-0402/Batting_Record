@@ -1,8 +1,8 @@
 // src/services/pitchService.js
 // Firebase 的身分驗證與球數 CRUD
-import { 
-    collection, addDoc, query, onSnapshot, serverTimestamp, 
-    deleteDoc, updateDoc, doc, orderBy 
+import {
+    collection, addDoc, query, onSnapshot, serverTimestamp,
+    deleteDoc, updateDoc, doc, orderBy
 } from 'firebase/firestore';
 import { signInAnonymously, signInWithCustomToken } from 'firebase/auth';
 import { Alert } from 'react-native';
@@ -13,42 +13,44 @@ export const initAuthAndGetRecords = (setRecordsCallback, setLoadingCallback, us
     // 加上空值保護：如果 firebaseStatus 還沒準備好，先回傳
     if (!firebaseStatus || !firebaseStatus.isReady) {
         // 如果還沒準備好，稍後 Hook 重新渲染時會再次觸發此處
-        setLoadingCallback(true); 
-        return () => {};
+        setLoadingCallback(true);
+        return () => { };
     }
-    
+
     const path = firebaseStatus.PITCH_RECORDS_PATH;
-    
+
     if (!firebaseStatus.isReady) {
         setLoadingCallback(false);
-        return () => {};
+        return () => { };
     }
 
     const handleAuth = async () => {
-         try {
+        try {
             const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
             if (token) {
-                await signInWithCustomToken(auth, token); 
+                await signInWithCustomToken(auth, token);
             } else {
                 await signInAnonymously(auth);
             }
-         } catch (error) {
-             Alert.alert("認證失敗", "無法登入 Firebase 服務。");
-         }
+        } catch (error) {
+            Alert.alert("認證失敗", "無法登入 Firebase 服務。");
+        }
     };
-    
+
     const q = query(collection(db, path), orderBy('createdAt', 'desc'));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
         const rawRecords = snapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data(),
-            createdAt: doc.data().createdAt ? doc.data().createdAt.toDate() : new Date() 
+            createdAt: doc.data().createdAt ? doc.data().createdAt.toDate() : new Date()
         }));
         setRecordsCallback(rawRecords);
-        setLoadingCallback(false); 
+        setLoadingCallback(false);
     }, (error) => {
         setLoadingCallback(false);
+        // 如果是權限錯誤且使用者已登出，則不顯示 Alert 避免干擾
+        if (error.code === 'permission-denied') return;
         Alert.alert("資料錯誤", "無法讀取歷史紀錄");
     });
 
@@ -60,7 +62,7 @@ export const initAuthAndGetRecords = (setRecordsCallback, setLoadingCallback, us
 export const savePitchRecord = async (data, user) => {
     // 呼叫時才從實體獲取路徑
     if (!user || !firebaseStatus?.isReady) throw new Error("Database not ready.");
-    
+
     await addDoc(collection(db, firebaseStatus.PITCH_RECORDS_PATH), {
         ...data,
         userId: user.uid,

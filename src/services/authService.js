@@ -11,6 +11,7 @@ import {
     updateProfile,
     updatePassword,
     deleteUser,
+    sendEmailVerification,
 } from 'firebase/auth';
 import { auth } from './firebaseService'; //
 
@@ -164,4 +165,11 @@ export const deleteUserAccount = async () => {
     const user = auth.currentUser;
     if (!user) throw new Error("No user logged in");
     await deleteUser(user);
+};
+
+// 6. 發送驗證信
+export const sendVerification = async () => {
+    const user = auth.currentUser;
+    if (!user) throw new Error("使用者尚未登入");
+    await sendEmailVerification(user);
 };
