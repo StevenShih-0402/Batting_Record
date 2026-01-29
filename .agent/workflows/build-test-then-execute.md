@@ -1,5 +1,5 @@
 ---
-description: 生成測試資料與測試程式，再執行測試
+description: (黑箱測試) 生成測試資料與測試程式，再執行測試
 ---
 
 # 角色
@@ -11,14 +11,15 @@ description: 生成測試資料與測試程式，再執行測試
 # 任務流程
 1. 環境初始化 (Environment Setup)
     - 依賴檢查：讀取 `package.json`，確認是否已安裝 `jest`, `jest-expo`, `@testing-library/react-native`, `react-test-renderer`。
-    - React 版本檢查：確認 React 版本是否大於 19.2.4。
+    - React 版本檢查：確認 React 版本不得大於 19.1.0，且 `react-test-renderer` 版本應該和 React 版本對齊。
     - 自動修正：若套件缺失或版本不足，請執行安裝/升級指令（建議使用 `--legacy-peer-deps`）。
     - 資料夾準備：確認 `tests/`, `tests/logs/success/`, `tests/logs/fail/`, `docs/tests/todo/`, `docs/tests/report/` 均已存在。
 
 2. 需求發想與文件化 (Test Planning)：參考 `docs/templates/TEST_TEMPLATE.md` 的格式。針對選定檔案撰寫測試案例清單，並將 Markdown 結果寫入 `docs/test/todo` 目錄下。
     - 檔案命名規則：`<選定檔案名稱>_test.md`。
     - 存在檢查：若該路徑已存在同名檔案，請讀取其內容並判斷是否需要微調。若邏輯無變動，嚴禁重複生成；若需調整，則覆蓋原檔。
-    - 中止點：文件準備完成後，輸出檔案路徑並停止動作，等待使用者確認。
+
+**中止點：文件準備完成後，輸出檔案路徑並停止動作，等待使用者確認。**
 
 3. 實作測試程式 (Test Implementation)：建立可執行的測試程式，並存放到 `tests` 資料夾。
     - 檔案命名規則：`<檔案名稱>.test.js`。
@@ -26,11 +27,8 @@ description: 生成測試資料與測試程式，再執行測試
     - 單一執行：若已存在同名測試檔案，請優先修正該檔案而非建立新檔。
 
 4. 自動化驗證與回報 (Verification)
-    - 日誌重新導向：使用指令 `npm test tests/<測試程式檔案> > test_output_<選定檔案名稱>_<序號>.txt 2>&1`。
-    - 序號管理：請檢查 `tests/logs/` 中的現有檔案，將 <序號> 自動遞增（例如 1, 2, 3...）。
-    - 日誌歸檔：
-        - 若測試失敗：將日誌移至 `tests/logs/fail/`。
-        - 若測試全過：將日誌移至 `tests/logs/success/`。
+    - 直接執行：執行 npm test tests/<測試程式檔案>。
+    - 日誌歸檔：獲取測試結果後，將其內容寫入 tests/logs/<success或fail>/<選定檔案名稱>.log。（不使用序號，直接覆蓋最新結果）
     - 生成報告：測試全過後，讀取 `docs/templates/REPORT_TEMPLATE.md` 填入內容，並存至 `docs/tests/report/`。檔案命名規則：`<選定檔案名稱>_report.md`
 
 5. 硬性重試限制 (Retry Policy)

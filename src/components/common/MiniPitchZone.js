@@ -4,10 +4,7 @@ import React from 'react';
 import { View, StyleSheet, Text } from 'react-native';
 import { useTheme } from 'react-native-paper';
 import { getColorByResult } from '../../constants/Colors';
-
-const MINI_ZONE_WIDTH = 200;
-const MINI_ZONE_HEIGHT = 250;
-const BALL_SIZE = 24;
+import { MINI_ZONE_WIDTH, MINI_ZONE_HEIGHT, MINI_BALL_SIZE } from '../../constants/GameConstants';
 
 const MiniPitchZone = ({ pitches }) => {
     const theme = useTheme();
@@ -43,8 +40,8 @@ const MiniPitchZone = ({ pitches }) => {
                             style={[
                                 styles.ball,
                                 {
-                                    left: x - (BALL_SIZE / 2),
-                                    top: y - (BALL_SIZE / 2),
+                                    left: x - (MINI_BALL_SIZE / 2),
+                                    top: y - (MINI_BALL_SIZE / 2),
                                     backgroundColor: color,
                                     borderColor: theme.colors.surface,
                                 }
@@ -74,9 +71,9 @@ const styles = StyleSheet.create({
     gridLineV: { position: 'absolute', width: 1, height: '100%', zIndex: 0 },
     ball: {
         position: 'absolute',
-        width: BALL_SIZE,
-        height: BALL_SIZE,
-        borderRadius: BALL_SIZE / 2,
+        width: MINI_BALL_SIZE,
+        height: MINI_BALL_SIZE,
+        borderRadius: MINI_BALL_SIZE / 2,
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 1,

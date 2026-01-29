@@ -6,6 +6,7 @@ import { View, ScrollView, StyleSheet, Alert } from 'react-native';
 import { Modal, Portal, Text, Button, IconButton, useTheme, Divider, Surface } from 'react-native-paper';
 import { getColorByResult } from '../../constants/Colors';
 import MiniPitchZone from '../common/MiniPitchZone';
+import { MINI_ZONE_WIDTH, MINI_ZONE_HEIGHT, MINI_BALL_SIZE } from '../../constants/GameConstants';
 
 const HistoryDataModal = ({ visible, onClose, record, onDeleteAtBat, onUpdatePitches }) => {
     const theme = useTheme();
@@ -189,9 +190,9 @@ const styles = StyleSheet.create({
     // 球的樣式
     ball: {
         position: 'absolute',
-        width: BALL_SIZE,
-        height: BALL_SIZE,
-        borderRadius: BALL_SIZE / 2,
+        width: MINI_BALL_SIZE,
+        height: MINI_BALL_SIZE,
+        borderRadius: MINI_BALL_SIZE / 2,
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 1, // 讓球有個細邊框，在重疊時比較好看

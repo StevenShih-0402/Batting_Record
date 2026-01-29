@@ -2,9 +2,9 @@
 // 讀取彙整後打席數據的介面
 
 import React, { useState } from 'react';
-import { View, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Text, useTheme, Card, List } from 'react-native-paper';
+import { Text, useTheme, Card, List, ActivityIndicator } from 'react-native-paper';
 import { Feather as Icon } from '@expo/vector-icons';
 
 // 導入元件
@@ -12,7 +12,7 @@ import HistoryDataModal from '../components/modals/HistoryDataModal';
 import { deleteAtBatSummary, updateAtBatSummaryPitches } from '../services/atBatSummaryService';
 
 // 導入 Hook
-import { useHistoryData } from '../hooks/api/useHistoryData'; 
+import { useHistoryData } from '../hooks/api/useHistoryData';
 
 const HistoryScreen = () => {
     const theme = useTheme();
@@ -68,16 +68,16 @@ const HistoryScreen = () => {
                 contentContainerStyle={styles.listContent}
                 ListEmptyComponent={<Text style={styles.emptyText}>尚無歷史紀錄</Text>}
                 renderItem={({ item }) => (
-                    <Card 
+                    <Card
                         style={[styles.card, { backgroundColor: theme.colors.surfaceVariant }]}
                         onPress={() => handleCardPress(item)}    // 觸發 HistoryDataModal 的點擊事件
                     >
                         <List.Item
                             title={item.atBatLabel || `打席結果：${item.finalOutcome}`}
-                            titleStyle={{ 
-                                color: theme.colors.primary, 
+                            titleStyle={{
+                                color: theme.colors.primary,
                                 fontWeight: 'bold',
-                                fontSize: 16 
+                                fontSize: 16
                             }}
                             description={`${item.date} | ${item.totalPitches} 球 \n${item.summaryNote}`}
                             descriptionStyle={{ color: theme.colors.onSurfaceVariant }}
@@ -101,35 +101,35 @@ const HistoryScreen = () => {
 };
 
 const styles = StyleSheet.create({
-    safeArea: { 
-        flex: 1 
+    safeArea: {
+        flex: 1
     },
-    centered: { 
-        flex: 1, 
-        justifyContent: 'center', 
-        alignItems: 'center' 
+    centered: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center'
     },
     headerContainer: {
-        paddingVertical: 15, 
-        alignItems: 'center', 
-        borderBottomWidth: 1, 
-        borderBottomColor: 'rgba(255,255,255,0.1)' 
+        paddingVertical: 15,
+        alignItems: 'center',
+        borderBottomWidth: 1,
+        borderBottomColor: 'rgba(255,255,255,0.1)'
     },
-    header: { 
-        fontSize: 24, 
-        fontWeight: 'bold' 
+    header: {
+        fontSize: 24,
+        fontWeight: 'bold'
     },
-    listContent: { 
-        padding: 16 
+    listContent: {
+        padding: 16
     },
-    card: { 
-        marginBottom: 12, 
-        elevation: 2 
+    card: {
+        marginBottom: 12,
+        elevation: 2
     },
-    emptyText: { 
-        textAlign: 'center', 
-        marginTop: 50, 
-        color: '#888' 
+    emptyText: {
+        textAlign: 'center',
+        marginTop: 50,
+        color: '#888'
     }
 });
 
