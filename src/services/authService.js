@@ -1,19 +1,22 @@
 // src/services/authService.js
 // Google 登入相關方法
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
-import { 
-    GoogleAuthProvider, 
-    signInWithCredential, 
-    linkWithCredential, 
+import {
+    GoogleAuthProvider,
+    signInWithCredential,
+    linkWithCredential,
     signInAnonymously,
     createUserWithEmailAndPassword,  // 信箱登入
     signInWithEmailAndPassword,      // 信箱登入 
+    updateProfile,
+    updatePassword,
+    deleteUser,
 } from 'firebase/auth';
 import { auth } from './firebaseService'; //
 
 // 1. 設定 Google Sign-In (請去 Firebase Console -> Auth 啟用 Google 並拿 Web Client ID)
 GoogleSignin.configure({
-    webClientId: process.env.EXPO_PUBLIC_FIREBASE_WEB_CLIENT_ID, 
+    webClientId: process.env.EXPO_PUBLIC_FIREBASE_WEB_CLIENT_ID,
 });
 
 /**
@@ -24,7 +27,7 @@ export const signInWithGoogle = async () => {
     try {
         // A. 檢查是否支援
         await GoogleSignin.hasPlayServices();
-        
+
         // B. 跳出 Google 選擇帳號視窗
         const userInfo = await GoogleSignin.signIn();
         const idToken = userInfo.data?.idToken;
@@ -46,8 +49,8 @@ export const signInWithGoogle = async () => {
                 // 如果綁定失敗 (通常是因為該 Google 帳號已經有別的資料了)
                 // 這裡看你的產品策略，通常是切換過去該 Google 帳號
                 if (linkError.code === 'auth/credential-already-in-use') {
-                   console.log("此 Google 帳號已有資料，將切換帳號");
-                   return await signInWithCredential(auth, credential);
+                    console.log("此 Google 帳號已有資料，將切換帳號");
+                    return await signInWithCredential(auth, credential);
                 }
                 throw linkError;
             }
@@ -135,4 +138,30 @@ export const linkGoogleAccount = async () => {
             Alert.alert("提醒", "此 Google 帳號已有其他紀錄，是否切換？");
         }
     }
+};
+
+// 3. 更新個人資料
+export const updateUserProfile = async (updates) => {
+    const user = auth.currentUser;
+    if (!user) throw new Error("No user logged in");
+
+    // updates 應為 { displayName, photoURL }
+    if (Object.keys(updates).length > 0) {
+        await updateProfile(user, updates);
+    }
+    return user;
+};
+
+// 4. 更新密碼
+export const updateUserPassword = async (password) => {
+    const user = auth.currentUser;
+    if (!user) throw new Error("No user logged in");
+    await updatePassword(user, password);
+};
+
+// 5. 刪除帳號
+export const deleteUserAccount = async () => {
+    const user = auth.currentUser;
+    if (!user) throw new Error("No user logged in");
+    await deleteUser(user);
 };
