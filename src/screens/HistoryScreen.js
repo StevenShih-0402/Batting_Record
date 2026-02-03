@@ -1,49 +1,44 @@
 // src/screens/HistoryScreen.js
 // 讀取彙整後打席數據的介面
 
-import React, { useState } from 'react';
+import React from 'react';
 import { View, StyleSheet, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text, useTheme, Card, List, ActivityIndicator } from 'react-native-paper';
 import { Feather as Icon } from '@expo/vector-icons';
 
-// 導入元件
-import HistoryDataModal from '../components/modals/HistoryDataModal';
+// 導入 Service
 import { deleteAtBatSummary, updateAtBatSummaryPitches } from '../services/atBatSummaryService';
 
 // 導入 Hook
 import { useHistoryData } from '../hooks/api/useHistoryData';
+import { useAuth } from '../hooks/auth/useAuth';
 
-const HistoryScreen = () => {
+/**
+ * 歷史紀錄頁面，顯示已彙整的打席列表。
+ * 點擊卡片時導航到 HistoryDetailScreen 查看詳情。
+ */
+const HistoryScreen = ({ navigation }) => {
     const theme = useTheme();
-    const { history, loading } = useHistoryData(); // 使用真實資料
+    const { history, loading } = useHistoryData();
+    const { user } = useAuth();
 
-    // 管理 Modal 的狀態
-    const [selectedRecord, setSelectedRecord] = useState(null);
-    const [modalVisible, setModalVisible] = useState(false);
-
-    // 點擊卡片，開啟 Modal
+    // 點擊卡片，導航到詳情頁
     const handleCardPress = (item) => {
-        setSelectedRecord(item);
-        setModalVisible(true);
+        navigation.navigate('HistoryDetail', {
+            record: item,
+            onDeleteAtBat: handleDeleteAtBat,
+            onUpdatePitches: handleUpdatePitches,
+        });
     };
 
-    // 關閉 Modal
-    const handleCloseModal = () => {
-        setModalVisible(false);
-        setSelectedRecord(null);
-    };
-
-    // 處理 Service 呼叫 (這兩個函式會傳給 Modal)
+    // 處理 Service 呼叫
     const handleUpdatePitches = async (docId, newPitches) => {
-        // UI 已經樂觀更新了，這裡只要負責打 API
         await updateAtBatSummaryPitches(docId, newPitches);
-        // 注意：這裡 Firebase onSnapshot 會自動更新 history 列表，所以不用手動改 history state
     };
 
     const handleDeleteAtBat = async (docId) => {
         await deleteAtBatSummary(docId);
-        // 同樣，onSnapshot 會自動移除該筆資料
     };
 
     if (loading) {
@@ -66,7 +61,11 @@ const HistoryScreen = () => {
                 data={history}
                 keyExtractor={(item) => item.id}
                 contentContainerStyle={styles.listContent}
-                ListEmptyComponent={<Text style={styles.emptyText}>尚無歷史紀錄</Text>}
+                ListEmptyComponent={
+                    <Text style={styles.emptyText}>
+                        尚無歷史紀錄{user?.isAnonymous ? '\n(登入才能查看彙整的打席紀錄)' : ''}
+                    </Text>
+                }
                 renderItem={({ item }) => (
                     <Card
                         style={[styles.card, { backgroundColor: theme.colors.surfaceVariant }]}
@@ -86,15 +85,6 @@ const HistoryScreen = () => {
                         />
                     </Card>
                 )}
-            />
-
-            {/* 詳細資料 Modal */}
-            <HistoryDataModal
-                visible={modalVisible}
-                onClose={handleCloseModal}
-                record={selectedRecord}
-                onDeleteAtBat={handleDeleteAtBat}
-                onUpdatePitches={handleUpdatePitches}
             />
         </SafeAreaView>
     );

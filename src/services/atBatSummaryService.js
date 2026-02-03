@@ -6,7 +6,7 @@ import { db, firebaseStatus } from './firebaseService';
 // ---- StrikeZoonScreen ----
 export const saveAtBatSummaryAndClearRecords = async (summaryData, user, recordIds = []) => {
     // 在函式執行時才抓取路徑，避免循環依賴
-    const pitchPath = firebaseStatus.PITCH_RECORDS_PATH;
+    const pitchPath = firebaseStatus.BATTING_RECORDS_PATH;
     const summaryPath = firebaseStatus.AT_BAT_SUMMARY_PATH;
     
     if (!user || !firebaseStatus.isReady) {

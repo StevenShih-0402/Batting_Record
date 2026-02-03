@@ -1,16 +1,16 @@
 // src/screens/StrikeZoneScreen.js
 // 打席數據輸入的介面
-import React, { useState, useCallback, useRef } from 'react'; 
-import { View, Alert, StyleSheet, ActivityIndicator, ScrollView, TouchableOpacity, Animated, PanResponder } from 'react-native'; 
+import React from 'react';
+import { View, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Text, useTheme, Button } from 'react-native-paper'; 
+import { Text, useTheme } from 'react-native-paper';
 import { Feather as Icon } from '@expo/vector-icons';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
 // 導入 Hook 與工具
 import useAtBatRecords from '../hooks/useAtBatRecords';
 import { useStrikeZoneUI } from '../hooks/useStrikeZoneUI';
 import { getColorByResult, COLOR_BALL, COLOR_STRIKE } from '../constants/Colors';
-import { Layout } from '../constants/Layout';
 
 // 導入組件
 import PitchGrid from '../components/common/PitchGrid';
@@ -18,25 +18,24 @@ import BallIndicator from '../components/common/BallIndicator';
 import PitchInputModal from '../components/modals/PitchInputModal';
 import EndAtBatModal from '../components/modals/EndAtBatModal';
 import PitchEditModal from '../components/modals/PitchEditModal';
-import HistoryList from '../components/HistoryList';
 import PitchHistoryDots from '../components/PitchHistoryDots';
 
 
-const StrikeZoneScreen = () => {
+const StrikeZoneScreen = ({ navigation }) => {
     const theme = useTheme();               // 取得自訂主題實體
     const insets = useSafeAreaInsets();     // 取得 SaveAreaView 裡面的事件設定實體
-    
+
     // 1. 數據層：負責 Firebase 與棒球規則邏輯
-    const { 
-        loading, 
-        atBatRecords, 
-        atBatStatus, 
-        handleSavePitch, 
-        handleDeletePitch, 
-        handleUpdatePitch, 
-        handleSaveSummary 
+    const {
+        loading,
+        atBatRecords,
+        atBatStatus,
+        handleSavePitch,
+        handleDeletePitch,
+        handleUpdatePitch,
+        handleSaveSummary
     } = useAtBatRecords();
-    
+
     // 2. UI 互動層：負責動畫、座標計算與 Modal 流程控制
     // 我們將數據層的 function 傳入，讓 UI Hook 處理「存檔後自動關閉 Modal」的連動行為
     const ui = useStrikeZoneUI({
@@ -45,10 +44,10 @@ const StrikeZoneScreen = () => {
         handleUpdatePitch,
         handleDeletePitch
     });
-    
+
     return (
         <SafeAreaView style={styles.safeArea} edges={['top']}>
-            <View style={[styles.headerContainer, { backgroundColor: theme.colors.surface }] }>
+            <View style={[styles.headerContainer, { backgroundColor: theme.colors.surface }]}>
                 <Text style={[styles.header, { color: theme.colors.primary }]}>
                     <Icon name="activity" size={24} color={theme.colors.primary} />
                     {'  '}打席數據輸入
@@ -57,42 +56,42 @@ const StrikeZoneScreen = () => {
 
             {/* 打席數據區域 */}
             {loading ? (
-                 <View style={[styles.loadingContainer, {backgroundColor: theme.colors.background}]}>
-                    <ActivityIndicator 
-                        animating={true} 
-                        size="large" 
+                <View style={[styles.loadingContainer, { backgroundColor: theme.colors.background }]}>
+                    <ActivityIndicator
+                        animating={true}
+                        size="large"
                         color={theme.colors.primary}
                     />
-                    <Text style={{color: theme.colors.onSurface, marginTop: 10}}>資料庫連線中...</Text>
-                 </View>
+                    <Text style={{ color: theme.colors.onSurface, marginTop: 10 }}>資料庫連線中...</Text>
+                </View>
             ) : (
-                <View 
-                    style={[styles.pitchZoneContainer, {backgroundColor: theme.colors.background}]} 
+                <View
+                    style={[styles.pitchZoneContainer, { backgroundColor: theme.colors.background }]}
                     onTouchEnd={ui.handleScreenPress}
                     onLayout={(e) => ui.layout.setPitchZoneHeight(e.nativeEvent.layout.height)}
                 >
-                    
+
                     {/* 頂部狀態列：好壞球燈號 */}
                     <View style={[styles.statusBar, { backgroundColor: theme.colors.surfaceVariant }]}>
                         {/* S: 好球燈 (上限 2 個燈，因為第 3 個燈就結束了) */}
                         <View style={styles.indicatorGroup}>
                             <Text style={styles.indicatorLabel}>S</Text>
-                            <BallIndicator 
-                                count={atBatStatus.strikes} 
-                                max={2} 
-                                activeColor={COLOR_STRIKE} 
-                                inactiveColor="#333" 
+                            <BallIndicator
+                                count={atBatStatus.strikes}
+                                max={2}
+                                activeColor={COLOR_STRIKE}
+                                inactiveColor="#333"
                             />
                         </View>
 
                         {/* B: 壞球燈 (上限 3 個燈) */}
                         <View style={styles.indicatorGroup}>
                             <Text style={styles.indicatorLabel}>B</Text>
-                            <BallIndicator 
-                                count={atBatStatus.balls} 
-                                max={3} 
-                                activeColor={COLOR_BALL} 
-                                inactiveColor="#333" 
+                            <BallIndicator
+                                count={atBatStatus.balls}
+                                max={3}
+                                activeColor={COLOR_BALL}
+                                inactiveColor="#333"
                             />
                         </View>
 
@@ -105,15 +104,15 @@ const StrikeZoneScreen = () => {
                         {/* 最新紀錄文字 */}
                         <View style={styles.latestRecordContainer}>
                             {atBatRecords.length > 0 && (
-                                <Text 
+                                <Text
                                     style={[
-                                        styles.latestRecordText, 
+                                        styles.latestRecordText,
                                         { color: getColorByResult(atBatRecords[0].result, atBatRecords[0].atBatEndOutcome) }
                                     ]}
                                     numberOfLines={1}
                                 >
                                     {/* 顯示最後一球的結果，若有結算則顯示結算文字 */}
-                                    {atBatStatus.isFinished 
+                                    {atBatStatus.isFinished
                                         ? (atBatStatus.balls >= 4 ? '保送' : atBatStatus.strikes >= 3 ? '三振' : '打席結束')
                                         : atBatRecords[0].result
                                     }
@@ -125,94 +124,54 @@ const StrikeZoneScreen = () => {
                     {/* B. 九宮格與歷史點：這部分是重點，它們會被 pitchZoneContainer 的 justifyContent: 'center' 置中 */}
                     <View style={styles.centerContentWrapper}>
                         {/* 確保九宮格渲染在這裡 */}
-                        <PitchGrid 
-                            ref={ui.layout.gridRef} 
+                        <PitchGrid
+                            ref={ui.layout.gridRef}
                             onLayout={(e) => {
                                 // 必須把 e 傳進去
                                 ui.layout.handleGridLayout(e);
                                 ui.layout.setPitchZoneHeight(e.nativeEvent.layout.height);
                             }}
                         />
-                        
+
                         {/* 球點畫布 */}
                         {ui.layout.gridLayout && (
-                            <View 
+                            <View
                                 style={{
                                     position: 'absolute', // 覆蓋在 Grid 上
                                     width: ui.layout.gridLayout.width,
                                     height: ui.layout.gridLayout.height,
-                                }} 
+                                }}
                                 pointerEvents="none"
                             >
-                                <PitchHistoryDots 
-                                    records={atBatRecords} 
-                                    pitchZoneHeight={ui.layout.pitchZoneHeight} 
-                                    gridLayout={ui.layout.gridLayout} 
+                                <PitchHistoryDots
+                                    records={atBatRecords}
+                                    pitchZoneHeight={ui.layout.pitchZoneHeight}
+                                    gridLayout={ui.layout.gridLayout}
                                 />
                             </View>
                         )}
                     </View>
-                        
+
                 </View>
             )}
 
-            {/* 右側側拉抽屜 */}
-            <Animated.View
-                {...ui.panResponder.panHandlers}
-                style={[
-                    styles.drawerContainer,
-                    { 
-                        backgroundColor: theme.colors.surfaceVariant,
-                        transform: [{ translateX: ui.drawer.anim }],
-                        top: insets.top,
-                        bottom: insets.bottom + 60,
-                        width: Layout.WINDOW.WIDTH,
-                        height: Layout.WINDOW.HEIGHT - insets.top - insets.bottom - 60
-                    }
-                ]}
-                pointerEvents={ui.drawer.isOpen ? 'auto' : 'none'}
+            {/* 懸浮紀錄按鈕 - 導航到 BattingListScreen */}
+            <TouchableOpacity
+                style={[styles.toggleButton, { backgroundColor: theme.colors.primary, bottom: insets.bottom - 35 }]}
+                onPress={() => navigation.navigate('BattingList', {
+                    records: atBatRecords,
+                    onUpdatePitch: handleUpdatePitch,
+                    onDeletePitch: handleDeletePitch,
+                    onSaveSummary: handleSaveSummary,
+                    atBatStatus: atBatStatus,
+                })}
             >
-                <View style={styles.drawerHeader}>
-                    <Text style={[styles.drawerTitle, { color: theme.colors.primary }]}><Icon name="archive" size={24} />  打席紀錄</Text>
-                    <TouchableOpacity onPress={ui.drawer.toggle} style={styles.drawerCloseBtn}>
-                        <Icon name="x" size={24} color="white"/>
-                    </TouchableOpacity>
-                </View>
+                <MaterialCommunityIcons name="clipboard-list" size={32} color={theme.colors.onPrimary} />
+            </TouchableOpacity>
 
-                <View style={styles.saveRecordButtonContainer}>
-                    <Button 
-                        mode="contained" 
-                        onPress={() => ui.modals.end.set(true)} 
-                        disabled={atBatRecords.length === 0}
-                        icon="archive-arrow-up"
-                    >
-                        儲存紀錄 (彙整)
-                    </Button>
-                </View>
 
-                <ScrollView style={styles.drawerScroll}>
-                    <Text style={styles.listTitle}>當前球數 ( {atBatRecords.length} )</Text>
-                    <HistoryList 
-                        records={atBatRecords} 
-                        onDelete={handleDeletePitch} 
-                        onEdit={ui.actions.handleEditPress} 
-                    />
-                </ScrollView>
-            </Animated.View>
-
-            {/* 懸浮抽屜按鈕 */}
-            {!ui.drawer.isOpen && (
-                <TouchableOpacity
-                    style={[styles.toggleButton, { backgroundColor: theme.colors.primary, bottom: insets.bottom - 35}]}
-                    onPress={ui.drawer.toggle}
-                >
-                    <Icon name="menu" size={24} color={theme.colors.onPrimary} />
-                </TouchableOpacity>
-            )}
-
-            
             {/* 各式功能彈窗 (使用 ui.actions 接管 UI 流程) */}
-            <PitchInputModal 
+            <PitchInputModal
                 isVisible={ui.modals.pitch.visible}
                 onClose={ui.actions.handlePitchModalClose}
                 onSave={ui.actions.onSavePitch}
@@ -270,8 +229,8 @@ const styles = StyleSheet.create({
     gridOverlay: {
         // 確保九宮格在容器內絕對置中
         ...StyleSheet.absoluteFillObject,
-        justifyContent: 'center', 
-        alignItems: 'center',    
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     statusBar: {
         position: 'absolute',    // 絕對定位在最頂端
@@ -317,49 +276,8 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '900',
         textShadowColor: 'rgba(0, 0, 0, 0.75)',
-        textShadowOffset: {width: -1, height: 1},
+        textShadowOffset: { width: -1, height: 1 },
         textShadowRadius: 10
-    },
-    drawerContainer: {
-        position: 'absolute',
-        right: 0,
-        zIndex: 20, 
-        shadowColor: "#000",
-        shadowOffset: { width: -5, height: 0 },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
-        elevation: 5,
-        borderLeftWidth: 1,
-        borderLeftColor: '#ddd',
-        borderRadius: 0,
-        overflow: 'hidden', 
-    },
-    drawerHeader: {
-        height: 60,                // 固定高度較好對齊
-        flexDirection: 'row',
-        justifyContent: 'center', 
-        alignItems: 'center',
-        paddingHorizontal: 15,
-        paddingVertical: 10,
-        borderBottomWidth: 1,
-        position: 'relative',      // 確保子元素絕對定位是參考此容器
-        borderBottomColor: '#ddd',
-    },
-    drawerCloseBtn: {
-        position: 'absolute',      // 絕對定位
-        right: 15,                 // 靠右對齊，留 15 的間距
-        padding: 10,               // 增加點擊區域
-    },
-    drawerTitle: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        textAlign: 'center',
-    },
-    drawerScroll: {
-        flex: 1,
-    },
-    drawerContent: {
-        paddingBottom: 20,
     },
     toggleButton: {
         position: 'absolute',
@@ -371,17 +289,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         zIndex: 30,
         elevation: 6,
-    },
-    saveRecordButtonContainer: {
-        padding: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: '#ddd',
-    },
-    listTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        marginVertical: 15,
-        paddingHorizontal: 16,
     },
 });
 

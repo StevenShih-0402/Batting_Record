@@ -12,8 +12,12 @@ const ProfileScreen = ({ navigation }) => {
     const handleLogout = async () => {
         const { signOutUser } = require('../services/authService');
         try {
-            await signOutUser();
-            Alert.alert("已登出");
+            const success = await signOutUser();
+            if (success) {
+                Alert.alert("已登出");
+            } else {
+                Alert.alert("提示", "訪客用戶無法登出，請先綁定 Google 或 Email 帳號");
+            }
         } catch (error) {
             console.error(error);
         }
@@ -60,7 +64,7 @@ const ProfileScreen = ({ navigation }) => {
                 {user?.isAnonymous && (
                     <List.Item
                         title="登入 / 註冊帳戶"
-                        description="綁定後可啟用雲端同步與編輯功能"
+                        description="綁定後可查詢歷史打席紀錄"
                         left={props => <List.Icon {...props} icon="login" color="#4285F4" />}
                         onPress={() => navigation.navigate('Login')}
                         titleStyle={{ color: theme.colors.primary, fontWeight: 'bold' }}

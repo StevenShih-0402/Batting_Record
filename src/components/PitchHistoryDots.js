@@ -19,15 +19,16 @@ const PitchHistoryDots = ({ records, pitchZoneHeight, gridLayout }) => {
                 if (typeof record.gridX !== 'number' || typeof record.gridY !== 'number') return null;
 
                 // 偵錯：看看從資料庫拿回來的 record 到底長怎樣
-                console.log(`球點檢查 [ID: ${record.id.slice(-4)}]:`, { 
-                    rawX: record.gridX, 
-                    rawY: record.gridY 
+                const recordId = record.id || `pitch-${index}`;
+                console.log(`球點檢查 [ID: ${recordId.slice(-4)}]:`, {
+                    rawX: record.gridX,
+                    rawY: record.gridY
                 });
 
                 // 計算絕對座標 (相對於九宮格畫布左上角)
                 const finalX = record.gridX * gridW;
                 const finalY = record.gridY * gridH;
-                
+
                 const pitchNumber = records.length - index;
 
                 // --- 偵錯用：檢查每一顆球的計算過程 ---
@@ -36,7 +37,7 @@ const PitchHistoryDots = ({ records, pitchZoneHeight, gridLayout }) => {
 
                 return (
                     <Dot
-                        key={record.id}
+                        key={recordId}
                         x={finalX}
                         y={finalY}
                         color={getColorByResult(record.result, record.atBatEndOutcome)}

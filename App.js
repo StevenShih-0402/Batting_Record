@@ -10,6 +10,8 @@ import LoginScreen from './src/screens/LoginScreen';
 import { useAuth } from './src/hooks/auth/useAuth';
 
 import EditProfileScreen from './src/screens/EditProfileScreen';
+import BattingListScreen from './src/screens/BattingListScreen';
+import HistoryDetailScreen from './src/screens/HistoryDetailScreen';
 
 import MainTabs from './src/components/MainTabs';
 
@@ -66,6 +68,30 @@ const App = () => {
                                         options={{ title: '編輯個人資料' }}
                                     />
                                 )}
+
+                                {/* 打席逐球紀錄列表頁 */}
+                                <Stack.Screen
+                                    name="BattingList"
+                                    component={BattingListScreen}
+                                    options={{
+                                        headerShown: true,
+                                        title: '打席紀錄',
+                                        headerStyle: { backgroundColor: customTheme.colors.surface },
+                                        headerTintColor: customTheme.colors.onSurface,
+                                    }}
+                                />
+
+                                {/* 打席詳情頁 */}
+                                <Stack.Screen
+                                    name="HistoryDetail"
+                                    component={HistoryDetailScreen}
+                                    options={{
+                                        headerShown: true,
+                                        title: '打席詳情',
+                                        headerStyle: { backgroundColor: customTheme.colors.surface },
+                                        headerTintColor: customTheme.colors.onSurface,
+                                    }}
+                                />
                             </>
                         ) : (
                             // --- 完全未登入狀態 ---

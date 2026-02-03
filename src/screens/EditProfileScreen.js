@@ -69,7 +69,7 @@ const EditProfileScreen = ({ navigation }) => {
                         {!isGoogleUser && (
                             <List.Section title="安全性">
                                 <TextInput
-                                    label="設定新密碼"
+                                    label="設定新密碼 (下次登入生效)"
                                     value={form.password}
                                     onChangeText={form.setPassword}
                                     mode="outlined"
@@ -78,9 +78,7 @@ const EditProfileScreen = ({ navigation }) => {
                                     placeholder="若不修改請留空"
                                     left={<TextInput.Icon icon="key" />}
                                 />
-                                <HelperText type="info">
-                                    修改密碼後下次登入生效。
-                                </HelperText>
+                                
                             </List.Section>
                         )}
 

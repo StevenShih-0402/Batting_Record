@@ -66,14 +66,29 @@ export const signInWithGoogle = async () => {
 };
 
 /**
- * 登出 (記得要連同 Google SDK 一起登出)
+ * 登出
+ * 重要：匿名用戶不會被登出，因為登出後 Firebase 會產生新的匿名帳號，
+ * 導致原本的資料無法關聯。這是 Expo/React Native 專案的標準做法。
+ * 
+ * @returns {boolean} 是否成功登出。false 表示用戶是匿名的，無法登出。
  */
 export const signOutUser = async () => {
     try {
+        const currentUser = auth.currentUser;
+
+        // 如果是匿名用戶，不執行登出
+        if (currentUser?.isAnonymous) {
+            console.log('匿名用戶無法登出，請先綁定 Google 或 Email 帳號');
+            return false;
+        }
+
         await GoogleSignin.signOut(); // 清除 Google 登入狀態
         await auth.signOut();         // 清除 Firebase 狀態
+        // 登出後 useAuth 的 onAuthStateChanged 會自動觸發匿名登入
+        return true;
     } catch (error) {
         console.error("Sign Out Error:", error);
+        return false;
     }
 };
 

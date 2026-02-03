@@ -24,7 +24,7 @@ export const useEndAtBat = (isVisible, atBatRecords, onSave, onClose) => {
         setIsSaving(true);
         try {
             // 如果標題沒填，給一個預設文字
-            const finalTitle = atBatTitle.trim() || `新打席紀錄 ( ${new Date().toLocaleTimeString()} )`;
+            const finalTitle = atBatTitle.trim() || `${new Date().toLocaleTimeString()}`;
             // 1. 執行原本的儲存邏輯
             // 這裡傳出去的 onSave，其實就是 useAtBatRecords 的 handleSaveSummaryAction
             await onSave({ 

@@ -17,7 +17,7 @@ export const initAuthAndGetRecords = (setRecordsCallback, setLoadingCallback, us
         return () => { };
     }
 
-    const path = firebaseStatus.PITCH_RECORDS_PATH;
+    const path = firebaseStatus.BATTING_RECORDS_PATH;
 
     if (!firebaseStatus.isReady) {
         setLoadingCallback(false);
@@ -63,7 +63,7 @@ export const savePitchRecord = async (data, user) => {
     // 呼叫時才從實體獲取路徑
     if (!user || !firebaseStatus?.isReady) throw new Error("Database not ready.");
 
-    await addDoc(collection(db, firebaseStatus.PITCH_RECORDS_PATH), {
+    await addDoc(collection(db, firebaseStatus.BATTING_RECORDS_PATH), {
         ...data,
         userId: user.uid,
         createdAt: serverTimestamp(),
@@ -72,7 +72,7 @@ export const savePitchRecord = async (data, user) => {
 
 // 3.3 編輯單次紀錄
 export const updatePitchRecord = async (id, updatedData) => {
-    const path = firebaseStatus.PITCH_RECORDS_PATH;
+    const path = firebaseStatus.BATTING_RECORDS_PATH;
     const docRef = doc(db, path, id);
     return await updateDoc(docRef, {
         ...updatedData,
@@ -82,7 +82,7 @@ export const updatePitchRecord = async (id, updatedData) => {
 
 // 3.4 刪除單次紀錄
 export const deletePitchRecord = async (id) => {
-    const path = firebaseStatus.PITCH_RECORDS_PATH;
+    const path = firebaseStatus.BATTING_RECORDS_PATH;
     if (!firebaseStatus.isReady) throw new Error("Database not ready.");
     await deleteDoc(doc(db, path, id));
 };

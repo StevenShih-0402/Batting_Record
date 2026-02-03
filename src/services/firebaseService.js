@@ -4,7 +4,7 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 import { initializeAuth, getReactNativePersistence } from 'firebase/auth';
 import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
-import { firebaseConfig, PITCH_RECORDS_PATH, AT_BAT_SUMMARY_PATH } from '../config/firebaseConfig';
+import { firebaseConfig, BATTING_RECORDS_PATH, AT_BAT_SUMMARY_PATH } from '../config/firebaseConfig';
 
 // 確保不重複初始化
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
@@ -19,7 +19,7 @@ const db = getFirestore(app);
 // 路徑與狀態導出
 export const firebaseStatus = {
     isReady: true,
-    PITCH_RECORDS_PATH,
+    BATTING_RECORDS_PATH,
     AT_BAT_SUMMARY_PATH,
 };
 
