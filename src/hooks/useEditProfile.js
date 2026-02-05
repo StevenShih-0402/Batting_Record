@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { auth } from '../services/firebaseService';
-import { updateUserProfile, updateUserPassword, deleteUserAccount } from '../services/authService';
+import { updateUserProfile, updateUserPassword, deleteUserAccount, linkGoogleAccount } from '../services/authService';
+import { uploadProfileImage } from '../services/storageService';
 
 export const useEditProfile = (navigation) => {
     const user = auth.currentUser;
@@ -16,21 +17,26 @@ export const useEditProfile = (navigation) => {
 
     // 1. 選取圖片邏輯
     const pickImage = async () => {
-        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (status !== 'granted') {
-            Alert.alert("權限不足", "需要相簿權限才能更換頭貼");
-            return;
-        }
+        try {
+            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+            if (status !== 'granted') {
+                Alert.alert("權限不足", "需要相簿權限才能更換頭貼");
+                return;
+            }
 
-        let result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaType.Images,
-            allowsEditing: true,
-            aspect: [1, 1],
-            quality: 0.5,
-        });
+            let result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                allowsEditing: true,
+                aspect: [1, 1],
+                quality: 0.5,
+            });
 
-        if (!result.canceled) {
-            setPhotoURL(result.assets[0].uri);
+            if (!result.canceled) {
+                setPhotoURL(result.assets[0].uri);
+            }
+        } catch (error) {
+            console.error('選取圖片失敗:', error);
+            Alert.alert("錯誤", "無法開啟相簿，請稍後再試");
         }
     };
 
@@ -42,8 +48,16 @@ export const useEditProfile = (navigation) => {
             if (displayName !== user.displayName) {
                 updates.displayName = displayName;
             }
+
+            // 檢查是否為本地圖片 URI，需要上傳至 Firebase Storage
             if (photoURL !== user.photoURL) {
-                updates.photoURL = photoURL;
+                if (photoURL && (photoURL.startsWith('file://') || photoURL.startsWith('content://'))) {
+                    // 上傳至 Firebase Storage
+                    const downloadURL = await uploadProfileImage(photoURL, user.uid);
+                    updates.photoURL = downloadURL;
+                } else {
+                    updates.photoURL = photoURL;
+                }
             }
 
             if (Object.keys(updates).length > 0) {
@@ -69,7 +83,33 @@ export const useEditProfile = (navigation) => {
         }
     };
 
-    // 3. 刪除帳號邏輯
+    // 3. 連結 Google 帳號
+    const handleLinkGoogle = async () => {
+        if (isGoogleUser) {
+            Alert.alert("提示", "您的帳號已連結 Google");
+            return;
+        }
+
+        try {
+            setLoading(true);
+            await linkGoogleAccount();
+            // 連結成功後返回上一頁，讓 ProfileScreen 重新載入使用者狀態
+            Alert.alert("成功", "已成功連結 Google 帳號！", [
+                { text: "確定", onPress: () => navigation.goBack() }
+            ]);
+        } catch (error) {
+            console.error('連結 Google 失敗:', error);
+            if (error.code === 'auth/credential-already-in-use') {
+                Alert.alert("提醒", "此 Google 帳號已有其他紀錄，請登出後再重新嘗試。");
+            } else {
+                Alert.alert("連結失敗", error.message || "無法連結 Google 帳號");
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // 4. 刪除帳號邏輯
     const handleDeleteAccount = () => {
         Alert.alert(
             "危險操作",
@@ -112,6 +152,7 @@ export const useEditProfile = (navigation) => {
         },
         actions: {
             handleSave,
+            handleLinkGoogle,
             handleDeleteAccount
         }
     };

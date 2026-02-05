@@ -133,26 +133,33 @@ export const signInAsGuest = async () => {
 // 綁定 (升級) 成 Google 帳號
 export const linkGoogleAccount = async () => {
     const currentUser = auth.currentUser;
-    // 檢查：只有匿名用戶需要被升級
-    if (!currentUser || !currentUser.isAnonymous) {
-        console.log("不需要升級或未登入");
-        return;
+
+    if (!currentUser) {
+        throw new Error("使用者未登入");
+    }
+
+    // 檢查是否已經連結 Google
+    const isAlreadyLinked = currentUser.providerData.some(p => p.providerId === 'google.com');
+    if (isAlreadyLinked) {
+        throw new Error("此帳號已連結 Google");
     }
 
     try {
         await GoogleSignin.hasPlayServices();
         const userInfo = await GoogleSignin.signIn();
         const idToken = userInfo.data?.idToken;
+
+        if (!idToken) {
+            throw new Error('無法取得 Google Token');
+        }
+
         const credential = GoogleAuthProvider.credential(idToken);
 
         // 執行連結
         await linkWithCredential(currentUser, credential);
-        Alert.alert("同步成功", "你的歷史紀錄已與 Google 帳號綁定！");
     } catch (error) {
-        if (error.code === 'auth/credential-already-in-use') {
-            // 這代表該 Google 帳號已經註冊過了，此時可詢問用戶是否要切換帳號（但舊資料會不見）
-            Alert.alert("提醒", "此 Google 帳號已有其他紀錄，是否切換？");
-        }
+        console.error('linkGoogleAccount error:', error);
+        throw error;
     }
 };
 

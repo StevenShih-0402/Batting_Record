@@ -3,6 +3,7 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 import { initializeAuth, getReactNativePersistence } from 'firebase/auth';
+import { getStorage } from 'firebase/storage';
 import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
 import { firebaseConfig, BATTING_RECORDS_PATH, AT_BAT_SUMMARY_PATH } from '../config/firebaseConfig';
 
@@ -15,6 +16,7 @@ const auth = initializeAuth(app, {
 });
 
 const db = getFirestore(app);
+const storage = getStorage(app);
 
 // 路徑與狀態導出
 export const firebaseStatus = {
@@ -24,4 +26,4 @@ export const firebaseStatus = {
 };
 
 // 直接匯出實例
-export { auth, db };
+export { auth, db, storage };

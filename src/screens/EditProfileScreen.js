@@ -2,7 +2,7 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { TextInput, Button, Avatar, useTheme, List, Switch, HelperText, Text, Divider } from 'react-native-paper';
+import { TextInput, Button, Avatar, useTheme, List, HelperText, Text, Divider } from 'react-native-paper';
 import { useEditProfile } from '../hooks/useEditProfile';
 
 const EditProfileScreen = ({ navigation }) => {
@@ -78,17 +78,19 @@ const EditProfileScreen = ({ navigation }) => {
                                     placeholder="若不修改請留空"
                                     left={<TextInput.Icon icon="key" />}
                                 />
-                                
+
                             </List.Section>
                         )}
 
-                        {/* 連結帳號狀態 (僅顯示資訊，實作綁定/解綁邏輯較複雜，建議先做顯示) */}
+                        {/* 連結帳號狀態 */}
                         <List.Section title="連結帳號">
                             <List.Item
                                 title="Google 帳號"
-                                description={isGoogleUser ? "已連結" : "未連結"}
+                                description={isGoogleUser ? "已連結" : "點擊連結 Google 帳號"}
                                 left={props => <List.Icon {...props} icon="google" color={isGoogleUser ? "#4285F4" : "gray"} />}
-                                right={props => <Switch value={isGoogleUser} disabled={true} />}
+                                right={props => <List.Icon {...props} icon={isGoogleUser ? "check-circle" : "link"} color={isGoogleUser ? "#4285F4" : "gray"} />}
+                                onPress={isGoogleUser ? null : actions.handleLinkGoogle}
+                                disabled={isGoogleUser}
                             />
                         </List.Section>
 

@@ -9,17 +9,28 @@ export const useHistoryData = () => {
     const [loading, setLoading] = useState(true);
     const { user, isReady } = useAuth();
 
+    // 只取出需要的 uid，避免整個 user 物件變化導致重新執行
+    const userId = user?.uid;
+    const isAnonymous = user?.isAnonymous;
+
     useEffect(() => {
         if (!isReady) return;
-        if (!user || user.isAnonymous) {
+
+        // 匿名用戶或未登入，清空歷史
+        if (!userId || isAnonymous) {
             setHistory([]);
             setLoading(false);
             return;
         }
 
-        const unsubscribe = getAtBatHistory(user.uid, setHistory, setLoading);
-        return () => unsubscribe && unsubscribe();
-    }, [user, isReady]);
+        // 正式用戶，訂閱歷史資料
+        const unsubscribe = getAtBatHistory(userId, setHistory, setLoading);
+        return () => {
+            if (unsubscribe) {
+                unsubscribe();
+            }
+        };
+    }, [userId, isAnonymous, isReady]); // 只依賴 uid 和 isAnonymous，不依賴整個 user
 
     return { history, loading };
 };
