@@ -158,13 +158,7 @@ const StrikeZoneScreen = ({ navigation }) => {
             {/* 懸浮紀錄按鈕 - 導航到 BattingListScreen */}
             <TouchableOpacity
                 style={[styles.toggleButton, { backgroundColor: theme.colors.primary, bottom: insets.bottom - 35 }]}
-                onPress={() => navigation.navigate('BattingList', {
-                    records: atBatRecords,
-                    onUpdatePitch: handleUpdatePitch,
-                    onDeletePitch: handleDeletePitch,
-                    onSaveSummary: handleSaveSummary,
-                    atBatStatus: atBatStatus,
-                })}
+                onPress={() => navigation.navigate('BattingList')}
             >
                 <MaterialCommunityIcons name="clipboard-list" size={32} color={theme.colors.onPrimary} />
             </TouchableOpacity>

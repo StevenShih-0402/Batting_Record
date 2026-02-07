@@ -1,4 +1,5 @@
 // src/screens/LoginScreen.js
+// 登入畫面
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Text, Button, useTheme, Surface, TextInput, Divider } from 'react-native-paper';
@@ -11,7 +12,9 @@ const LoginScreen = ({ navigation }) => {
     const { state, actions } = useLogin();
     const {
         loading, email, setEmail, password, setPassword,
-        isLoginMode, setIsLoginMode, showPassword, setShowPassword
+        confirmPassword, setConfirmPassword, // Added
+        isLoginMode, setIsLoginMode, showPassword, setShowPassword,
+        showConfirmPassword, setShowConfirmPassword // Added
     } = state;
 
     const SocialButton = ({ icon, color, onPress, testID }) => (
@@ -53,9 +56,28 @@ const LoginScreen = ({ navigation }) => {
                     disabled={loading}
                 />
 
+                {/* 確認密碼：只在註冊時顯示 */}
+                {!isLoginMode && (
+                    <TextInput
+                        label="確認密碼"
+                        value={confirmPassword}
+                        onChangeText={setConfirmPassword}
+                        mode="outlined"
+                        secureTextEntry={!showConfirmPassword}
+                        right={<TextInput.Icon icon={showConfirmPassword ? "eye-off" : "eye"} onPress={() => setShowConfirmPassword(!showConfirmPassword)} />}
+                        style={styles.input}
+                        disabled={loading}
+                    />
+                )}
+
                 <Button
                     mode="contained"
-                    onPress={actions.handleEmailAuth}
+                    onPress={async () => {
+                        const success = await actions.handleEmailAuth();
+                        if (success) {
+                            navigation.goBack();
+                        }
+                    }}
                     loading={loading}
                     style={styles.mainBtn}
                     contentStyle={{ height: 48 }}

@@ -4,7 +4,7 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { TouchableRipple, Text, useTheme, Button } from 'react-native-paper';
+import { TouchableRipple, Text, useTheme, Button, ActivityIndicator } from 'react-native-paper';
 import { Feather as Icon } from '@expo/vector-icons';
 import { getColorByResult } from '../constants/Colors';
 
@@ -12,19 +12,25 @@ import { getColorByResult } from '../constants/Colors';
 import PitchEditModal from '../components/modals/PitchEditModal';
 import EndAtBatModal from '../components/modals/EndAtBatModal';
 
+// 導入 Hook
+import useAtBatRecords from '../hooks/useAtBatRecords';
+
 /**
  * 打席逐球紀錄的 Screen，顯示當前打席的所有投球紀錄。
- * 透過 route.params 接收 records 與 action callbacks。
+ * 改為獨立使用 Hook 獲取資料，不再依賴 navigation params。
  */
-const BattingListScreen = ({ navigation, route }) => {
+const BattingListScreen = ({ navigation }) => {
     const theme = useTheme();
+
+    // 使用 Hook 獲取資料與操作方法
     const {
-        records = [],
-        onUpdatePitch,      // 更新單球資料的 callback
-        onDeletePitch,      // 刪除單球的 callback
-        onSaveSummary,      // 儲存彙整的 callback
-        atBatStatus
-    } = route.params || {};
+        loading,
+        atBatRecords: records,
+        atBatStatus,
+        handleUpdatePitch: onUpdatePitch,
+        handleDeletePitch: onDeletePitch,
+        handleSaveSummary: onSaveSummary
+    } = useAtBatRecords();
 
     // Modal 狀態管理
     const [editModalVisible, setEditModalVisible] = useState(false);

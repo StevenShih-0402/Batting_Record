@@ -1,16 +1,16 @@
 // src/screens/ProfileScreen.js
 // 個人中心頁面
 import React from 'react';
-import { View, StyleSheet, Alert } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { Text, Avatar, Button, List, Divider, useTheme } from 'react-native-paper';
-import { auth, sendVerification } from '../services/authService';
+
 import { useAuth } from '../hooks/auth/useAuth';
 import { useAlert } from '../context/AlertContext';
 
 const ProfileScreen = ({ navigation }) => {
     const theme = useTheme();
     const { user } = useAuth();
-    const { showSuccess, showWarning, showError, showMailSend } = useAlert();
+    const { showSuccess, showWarning, showError } = useAlert();
 
     const handleLogout = async () => {
         const { signOutUser } = require('../services/authService');
@@ -26,14 +26,7 @@ const ProfileScreen = ({ navigation }) => {
         }
     };
 
-    const handleSendVerification = async () => {
-        try {
-            await sendVerification();
-            showMailSend("成功", "已發送驗證信至您的信箱");
-        } catch (error) {
-            showError("錯誤", error.message);
-        }
-    };
+
 
     return (
         <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -84,14 +77,7 @@ const ProfileScreen = ({ navigation }) => {
                             onPress={() => navigation.navigate('EditProfile')}
                         />
 
-                        {!user?.emailVerified && (
-                            <List.Item
-                                title="驗證電子郵件"
-                                titleStyle={{ color: theme.colors.error }}
-                                left={props => <List.Icon {...props} icon="email-alert" color={theme.colors.error} />}
-                                onPress={handleSendVerification}
-                            />
-                        )}
+
 
                         <List.Item
                             title="登出"

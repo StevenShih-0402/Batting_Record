@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text, Button, IconButton, useTheme, Divider, Surface } from 'react-native-paper';
 import { useAlert } from '../context/AlertContext';
 import { getColorByResult } from '../constants/Colors';
+import { deleteAtBatSummary, updateAtBatSummaryPitches } from '../services/atBatSummaryService'; // Added import
 
 // 使用與 StrikeZoneScreen 相同的九宮格組件
 import PitchGrid from '../components/common/PitchGrid';
@@ -17,11 +18,11 @@ import PitchEditModal from '../components/modals/PitchEditModal';
 
 /**
  * 打席詳細資料的 Screen，顯示九宮格與逐球詳細數據。
- * 透過 route.params 接收 record、onDeleteAtBat、onUpdatePitches callback。
+ * 透過 route.params 接收 record。
  */
 const HistoryDetailScreen = ({ navigation, route }) => {
     const theme = useTheme();
-    const { record, onDeleteAtBat, onUpdatePitches } = route.params || {};
+    const { record } = route.params || {}; // Removed callbacks
     const { showWarning } = useAlert();
     const [localPitches, setLocalPitches] = useState([]);
     const [gridLayout, setGridLayout] = useState(null);
@@ -64,9 +65,7 @@ const HistoryDetailScreen = ({ navigation, route }) => {
                     const newPitches = [...localPitches];
                     newPitches.splice(index, 1);
                     setLocalPitches(newPitches);
-                    if (onUpdatePitches) {
-                        await onUpdatePitches(record.id, newPitches);
-                    }
+                    await updateAtBatSummaryPitches(record.id, newPitches);
                 }
             }
         ]);
@@ -80,9 +79,7 @@ const HistoryDetailScreen = ({ navigation, route }) => {
                 text: "確認刪除",
                 // style: "destructive", // CustomAlertModal 對應 style
                 onPress: async () => {
-                    if (onDeleteAtBat) {
-                        await onDeleteAtBat(record.id);
-                    }
+                    await deleteAtBatSummary(record.id);
                     navigation.goBack();
                 }
             }
@@ -115,9 +112,7 @@ const HistoryDetailScreen = ({ navigation, route }) => {
             };
             setLocalPitches(newPitches);
 
-            if (onUpdatePitches) {
-                await onUpdatePitches(record.id, newPitches);
-            }
+            await updateAtBatSummaryPitches(record.id, newPitches);
             handleEditModalClose();
         } finally {
             setIsSaving(false);

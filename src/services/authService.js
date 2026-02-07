@@ -61,6 +61,7 @@ export const signInWithGoogle = async () => {
             return await signInWithCredential(auth, credential);
         }
     } catch (error) {
+        if (error.code === 'auth/email-already-in-use') throw new Error('此 Google 帳號已有資料');
         console.error("Google Sign-In Error:", error);
         throw error;
     }
@@ -88,7 +89,7 @@ export const signOutUser = async () => {
         // 登出後 useAuth 的 onAuthStateChanged 會自動觸發匿名登入
         return true;
     } catch (error) {
-        console.error("Sign Out Error:", error);
+        console.error("登出時發生錯誤:", error);
         return false;
     }
 };
@@ -97,6 +98,7 @@ export const signOutUser = async () => {
 export const signUpWithEmail = async (email, password) => {
     try {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        // [FIXED] 註冊時不應立即登出或拋錯，需保留 session 讓 useLogin 執行 sendVerification
         return userCredential.user;
     } catch (error) {
         // 可以把 Firebase 醜醜的錯誤代碼轉成中文
@@ -111,7 +113,13 @@ export const signUpWithEmail = async (email, password) => {
 export const signInWithEmail = async (email, password) => {
     try {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        return userCredential.user;
+        const user = userCredential.user;
+
+        if (!user.emailVerified) {
+            await auth.signOut(); // 強制登出，防止未驗證用戶進入系統
+        }
+
+        return user;
     } catch (error) {
         if (error.code === 'auth/user-not-found') throw new Error('找不到此帳號');
         if (error.code === 'auth/wrong-password') throw new Error('密碼錯誤');

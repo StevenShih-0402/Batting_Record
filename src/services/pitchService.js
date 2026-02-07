@@ -2,7 +2,7 @@
 // Firebase 的身分驗證與球數 CRUD
 import {
     collection, addDoc, query, onSnapshot, serverTimestamp,
-    deleteDoc, updateDoc, doc, orderBy
+    deleteDoc, updateDoc, doc, orderBy, where
 } from 'firebase/firestore';
 import { signInAnonymously, signInWithCustomToken } from 'firebase/auth';
 import { Alert } from 'react-native';
@@ -37,14 +37,26 @@ export const initAuthAndGetRecords = (setRecordsCallback, setLoadingCallback, us
         }
     };
 
-    const q = query(collection(db, path), orderBy('createdAt', 'desc'));
+    // 建立查詢：如果有 user 則過濾 userId
+    let q;
+    if (user) {
+        // [FIXED] 為了避免 Firebase 需要複合索引 (where + orderBy)，改為前端排序
+        q = query(collection(db, path), where('userId', '==', user.uid));
+    } else {
+        // Fallback (理論上不應發生，因為 usePitchData 有擋)
+        q = query(collection(db, path), orderBy('createdAt', 'desc'));
+    }
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-        const rawRecords = snapshot.docs.map(doc => ({
+        let rawRecords = snapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data(),
             createdAt: doc.data().createdAt ? doc.data().createdAt.toDate() : new Date()
         }));
+
+        // 前端排序：最新的在前面 (desc)
+        rawRecords.sort((a, b) => b.createdAt - a.createdAt);
+
         setRecordsCallback(rawRecords);
         setLoadingCallback(false);
     }, (error) => {

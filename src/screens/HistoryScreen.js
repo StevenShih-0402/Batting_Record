@@ -27,8 +27,6 @@ const HistoryScreen = ({ navigation }) => {
     const handleCardPress = (item) => {
         navigation.navigate('HistoryDetail', {
             record: item,
-            onDeleteAtBat: handleDeleteAtBat,
-            onUpdatePitches: handleUpdatePitches,
         });
     };
 
@@ -63,7 +61,7 @@ const HistoryScreen = ({ navigation }) => {
                 contentContainerStyle={styles.listContent}
                 ListEmptyComponent={
                     <Text style={styles.emptyText}>
-                        尚無歷史紀錄{user?.isAnonymous ? '\n(登入才能查看彙整的打席紀錄)' : ''}
+                        尚無歷史紀錄{user?.isAnonymous ? '\n(登入查看彙整的打席紀錄)' : ''}
                     </Text>
                 }
                 renderItem={({ item }) => (

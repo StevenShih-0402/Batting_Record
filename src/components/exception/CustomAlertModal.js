@@ -49,8 +49,8 @@ const CustomAlertModal = () => {
     return (
         <Portal>
             <Modal visible={visible} onDismiss={hideAlert} contentContainerStyle={styles.modalContent}>
-                <Card style={[styles.card, { borderColor: alertColor, borderWidth: 1, backgroundColor: theme.colors.background, padding: 15 }]}>
-                    
+                <Card style={[styles.card, { borderColor: alertColor, backgroundColor: theme.colors.background }]}>
+
                     <View style={{ alignItems: 'center', justifyContent: 'center', paddingVertical: 10 }}>
                         <Avatar.Icon
                             size={80}
@@ -58,7 +58,7 @@ const CustomAlertModal = () => {
                             color={alertColor}
                             style={{ backgroundColor: 'transparent' }}
                         />
-                        <Text variant="titleLarge" style={{ color: alertColor, fontWeight: 'bold', textAlign: 'center' }}>
+                        <Text variant="titleLarge" style={[styles.title, { color: alertColor }]}>
                             {title}
                         </Text>
                     </View>
@@ -96,8 +96,16 @@ const styles = StyleSheet.create({
         width: '90%',
         maxWidth: 400,
         backgroundColor: 'white', // Or dynamic based on theme
+        borderWidth: 1,
         borderRadius: 12, // More rounded
         elevation: 5,
+        padding: 15
+    },
+    title: {
+        fontWeight: 'bold',
+        textAlign: 'center',
+        padding: 10,
+        width: '100%',
     },
     message: {
         textAlign: 'center',
