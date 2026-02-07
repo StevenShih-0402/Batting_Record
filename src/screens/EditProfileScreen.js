@@ -2,7 +2,7 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { TextInput, Button, Avatar, useTheme, List, HelperText, Text, Divider } from 'react-native-paper';
+import { TextInput, Button, Avatar, useTheme, List, HelperText, Text, Divider, Switch } from 'react-native-paper';
 import { useEditProfile } from '../hooks/useEditProfile';
 
 const EditProfileScreen = ({ navigation }) => {
@@ -86,11 +86,32 @@ const EditProfileScreen = ({ navigation }) => {
                         <List.Section title="連結帳號">
                             <List.Item
                                 title="Google 帳號"
-                                description={isGoogleUser ? "已連結" : "點擊連結 Google 帳號"}
+                                description={() => (
+                                    <View>
+                                        <Text style={{ fontWeight: 'bold', fontSize: 12, color: theme.colors.onSurfaceVariant }}>
+                                            {isGoogleUser ? `${new Date().toISOString().split('T')[0]} 已連結` : "點擊連結 Google 帳號"}
+                                        </Text>
+                                        {isGoogleUser && (
+                                            <Text
+                                                numberOfLines={1}
+                                                ellipsizeMode="middle"
+                                                style={{ fontSize: 9, color: theme.colors.onSurfaceVariant }}
+                                            >
+                                                ({user?.email})
+                                            </Text>
+
+                                        )}
+                                    </View>
+                                )}
                                 left={props => <List.Icon {...props} icon="google" color={isGoogleUser ? "#4285F4" : "gray"} />}
-                                right={props => <List.Icon {...props} icon={isGoogleUser ? "check-circle" : "link"} color={isGoogleUser ? "#4285F4" : "gray"} />}
-                                onPress={isGoogleUser ? null : actions.handleLinkGoogle}
-                                disabled={isGoogleUser}
+                                right={() => (
+                                    <Switch
+                                        value={isGoogleUser}
+                                        onValueChange={isGoogleUser ? actions.handleUnlinkGoogle : actions.handleLinkGoogle}
+                                        color={theme.colors.primary}
+                                    />
+                                )}
+                                onPress={isGoogleUser ? actions.handleUnlinkGoogle : actions.handleLinkGoogle}
                             />
                         </List.Section>
 

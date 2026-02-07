@@ -12,6 +12,7 @@ import {
     updatePassword,
     deleteUser,
     sendEmailVerification,
+    unlink,
 } from 'firebase/auth';
 import { auth } from './firebaseService'; //
 
@@ -159,6 +160,21 @@ export const linkGoogleAccount = async () => {
         await linkWithCredential(currentUser, credential);
     } catch (error) {
         console.error('linkGoogleAccount error:', error);
+        throw error;
+    }
+};
+
+// 解除連結 Google 帳號
+export const unlinkGoogleAccount = async () => {
+    const currentUser = auth.currentUser;
+    if (!currentUser) throw new Error("使用者未登入");
+
+    try {
+        await unlink(currentUser, 'google.com');
+        console.log("成功解除 Google 帳號連結");
+        return true;
+    } catch (error) {
+        console.error('unlinkGoogleAccount error:', error);
         throw error;
     }
 };

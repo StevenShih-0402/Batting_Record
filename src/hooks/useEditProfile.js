@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { auth } from '../services/firebaseService';
-import { updateUserProfile, updateUserPassword, deleteUserAccount, linkGoogleAccount } from '../services/authService';
+import { updateUserProfile, updateUserPassword, deleteUserAccount, linkGoogleAccount, unlinkGoogleAccount } from '../services/authService';
 import { uploadProfileImage } from '../services/storageService';
 
 export const useEditProfile = (navigation) => {
@@ -109,7 +109,41 @@ export const useEditProfile = (navigation) => {
         }
     };
 
-    // 4. 刪除帳號邏輯
+    // 4. 解除連結 Google 帳號
+    const handleUnlinkGoogle = async () => {
+        if (!isGoogleUser) {
+            Alert.alert("提示", "您的帳號尚未連結 Google");
+            return;
+        }
+
+        Alert.alert(
+            "解除連結",
+            "確定要解除與 Google 帳號的連結嗎？解除後將無法使用 Google 一鍵登入此帳號。",
+            [
+                { text: "取消", style: "cancel" },
+                {
+                    text: "確認解除",
+                    style: "destructive",
+                    onPress: async () => {
+                        try {
+                            setLoading(true);
+                            await unlinkGoogleAccount();
+                            Alert.alert("成功", "已成功解除 Google 帳號連結！", [
+                                { text: "確定", onPress: () => navigation.goBack() }
+                            ]);
+                        } catch (error) {
+                            console.error('解除連結失敗:', error);
+                            Alert.alert("錯誤", error.message || "無法解除連結");
+                        } finally {
+                            setLoading(false);
+                        }
+                    }
+                }
+            ]
+        );
+    };
+
+    // 5. 刪除帳號邏輯
     const handleDeleteAccount = () => {
         Alert.alert(
             "危險操作",
@@ -153,6 +187,7 @@ export const useEditProfile = (navigation) => {
         actions: {
             handleSave,
             handleLinkGoogle,
+            handleUnlinkGoogle,
             handleDeleteAccount
         }
     };
