@@ -1,9 +1,10 @@
 // src/hooks/useStrikeZoneUI.js
 // screen 裡面與前端元件互動較密切的邏輯
 import { useState, useRef, useCallback } from 'react';
-import { Animated, PanResponder, Alert } from 'react-native';
+import { Animated, PanResponder } from 'react-native';
 import { Layout } from '../constants/Layout';
 import { getCellNumber } from '../utils/PitchUtils'
+import { useAlert } from '../context/AlertContext';
 
 export const useStrikeZoneUI = ({ atBatStatus, handleSavePitch, handleUpdatePitch, handleDeletePitch }) => {
     // --- Modal 狀態 ---
@@ -11,10 +12,11 @@ export const useStrikeZoneUI = ({ atBatStatus, handleSavePitch, handleUpdatePitc
     const [isEditModalVisible, setIsEditModalVisible] = useState(false);
     const [isEndModalVisible, setIsEndModalVisible] = useState(false);
     const [editingRecord, setEditingRecord] = useState(null);
-    const [selectedCellInfo, setSelectedCellInfo] = useState({ 
-        cellNumber: 0, gridX: 0, gridY: 0, isInside: false 
+    const [selectedCellInfo, setSelectedCellInfo] = useState({
+        cellNumber: 0, gridX: 0, gridY: 0, isInside: false
     });
     const [isSaving, setIsSaving] = useState(false);
+    const { showWarning } = useAlert();
 
     // --- 佈局狀態 ---
     const [gridLayout, setGridLayout] = useState(null);
@@ -46,7 +48,7 @@ export const useStrikeZoneUI = ({ atBatStatus, handleSavePitch, handleUpdatePitc
             },
             onPanResponderRelease: (evt, gestureState) => {
                 const swipeThreshold = 0.3 * Layout.WINDOW.WIDTH;
-                const swipeSpeedThreshold = 0.5; 
+                const swipeSpeedThreshold = 0.5;
 
                 if (gestureState.dx > swipeThreshold || gestureState.vx > swipeSpeedThreshold) {
                     Animated.timing(slideAnim, {
@@ -75,7 +77,7 @@ export const useStrikeZoneUI = ({ atBatStatus, handleSavePitch, handleUpdatePitc
         // 使用更穩定的 measureInWindow
         gridRef.current?.measureInWindow((x, y, w, h) => {
             console.log("✅ 佈局成功取得:", { x, y, width, height });
-            
+
             setGridLayout({
                 x: x,      // 絕對座標 X
                 y: y,      // 絕對座標 Y
@@ -90,16 +92,16 @@ export const useStrikeZoneUI = ({ atBatStatus, handleSavePitch, handleUpdatePitc
         console.log("螢幕點擊觸發");
 
         if (atBatStatus.isFinished) {
-            Alert.alert("打席已結束", "請先儲存或刪除紀錄。");
+            showWarning("打席已結束", "請先儲存或刪除紀錄。");
             return;
         }
-        
+
         // 確保 gridLayout 存在且寬高不為 0，避免除以 0 的錯誤
         if (gridLayout && gridLayout.width > 0 && gridLayout.height > 0) {
             const { pageX, pageY } = event.nativeEvent;
             console.log("點擊位置:", pageX, pageY);
             console.log("目前 gridLayout:", gridLayout);
-            
+
             // 1. 取得結果，裡面的 relX 已經是比例了
             const result = getCellNumber(pageX, pageY, gridLayout);
             console.log("計算結果:", result);
@@ -107,7 +109,7 @@ export const useStrikeZoneUI = ({ atBatStatus, handleSavePitch, handleUpdatePitc
             setSelectedCellInfo({
                 cellNumber: result.cellNumber,
                 isInside: result.isInside,
-                
+
                 gridX: result.relX, // 直接存入，不要再除一次
                 gridY: result.relY,
             });
@@ -152,18 +154,18 @@ export const useStrikeZoneUI = ({ atBatStatus, handleSavePitch, handleUpdatePitc
         try {
             // 執行刪除
             await handleDeletePitch(recordId);
-            
+
             // 強制執行關閉 (不再判斷 success，只要沒噴 error 就執行)
             setIsEditModalVisible(false);
             setEditingRecord(null);
-            
+
         } catch (error) {
             console.error("Delete failed:", error);
         } finally {
             setIsSaving(false);
         }
     }, [handleDeletePitch]);
-    
+
     // 4. 處理點擊編輯
     const handleEditPress = useCallback((record) => {
         setEditingRecord(record);
@@ -178,17 +180,17 @@ export const useStrikeZoneUI = ({ atBatStatus, handleSavePitch, handleUpdatePitc
             edit: { visible: isEditModalVisible, set: setIsEditModalVisible, record: editingRecord, setRecord: setEditingRecord },
             end: { visible: isEndModalVisible, set: setIsEndModalVisible }
         },
-        drawer: { 
-            isOpen: isDrawerOpen, 
-            anim: slideAnim, 
-            toggle: toggleDrawer 
+        drawer: {
+            isOpen: isDrawerOpen,
+            anim: slideAnim,
+            toggle: toggleDrawer
         },
-        layout: { 
-            gridRef, 
-            gridLayout, 
-            pitchZoneHeight, 
-            setPitchZoneHeight, 
-            handleGridLayout 
+        layout: {
+            gridRef,
+            gridLayout,
+            pitchZoneHeight,
+            setPitchZoneHeight,
+            handleGridLayout
         },
         selectedCellInfo,
         isSaving,

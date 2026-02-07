@@ -14,6 +14,8 @@ import BattingListScreen from './src/screens/BattingListScreen';
 import HistoryDetailScreen from './src/screens/HistoryDetailScreen';
 
 import MainTabs from './src/components/MainTabs';
+import { AlertProvider } from './src/context/AlertContext';
+import CustomAlertModal from './src/components/exception/CustomAlertModal';
 
 const Stack = createNativeStackNavigator(); // 2. 建立 Stack 實例
 
@@ -36,69 +38,72 @@ const App = () => {
     return (
         <SafeAreaProvider initialMetrics={initialWindowMetrics}>
             <PaperProvider theme={customTheme}>
-                <NavigationContainer theme={CombinedDarkTheme}>
-                    <Stack.Navigator screenOptions={{ headerShown: false }}>
-                        {user ? (
-                            // --- 已登入或訪客狀態 ---
-                            <>
-                                <Stack.Screen name="MainTabs">
-                                    {(props) => <MainTabs {...props} user={user} />}
-                                </Stack.Screen>
+                <AlertProvider>
+                    <NavigationContainer theme={CombinedDarkTheme}>
+                        <Stack.Navigator screenOptions={{ headerShown: false }}>
+                            {user ? (
+                                // --- 已登入或訪客狀態 ---
+                                <>
+                                    <Stack.Screen name="MainTabs">
+                                        {(props) => <MainTabs {...props} user={user} />}
+                                    </Stack.Screen>
 
-                                {/* 如果是訪客，我們把 Login 加入路由表，讓 Profile 可以 navigate 到它 */}
-                                {user.isAnonymous && (
+                                    {/* 如果是訪客，我們把 Login 加入路由表，讓 Profile 可以 navigate 到它 */}
+                                    {user.isAnonymous && (
+                                        <Stack.Screen
+                                            name="Login"
+                                            component={LoginScreen}
+                                            options={{
+                                                presentation: 'modal', // 下方滑入效果
+                                                headerShown: true,
+                                                title: '帳號綁定',
+                                                headerStyle: { backgroundColor: customTheme.colors.surface },
+                                                headerTintColor: customTheme.colors.onSurface,
+                                            }}
+                                        />
+                                    )}
+
+                                    {/* 只有登入用戶(非訪客)才能進入編輯頁面，雖然 ProfileScreen 會擋，但這裡也加上判斷較保險 */}
+                                    {!user.isAnonymous && (
+                                        <Stack.Screen
+                                            name="EditProfile"
+                                            component={EditProfileScreen}
+                                            options={{ title: '編輯個人資料' }}
+                                        />
+                                    )}
+
+                                    {/* 打席逐球紀錄列表頁 */}
                                     <Stack.Screen
-                                        name="Login"
-                                        component={LoginScreen}
+                                        name="BattingList"
+                                        component={BattingListScreen}
                                         options={{
-                                            presentation: 'modal', // 下方滑入效果
                                             headerShown: true,
-                                            title: '帳號綁定',
+                                            title: '打席紀錄',
                                             headerStyle: { backgroundColor: customTheme.colors.surface },
                                             headerTintColor: customTheme.colors.onSurface,
                                         }}
                                     />
-                                )}
 
-                                {/* 只有登入用戶(非訪客)才能進入編輯頁面，雖然 ProfileScreen 會擋，但這裡也加上判斷較保險 */}
-                                {!user.isAnonymous && (
+                                    {/* 打席詳情頁 */}
                                     <Stack.Screen
-                                        name="EditProfile"
-                                        component={EditProfileScreen}
-                                        options={{ title: '編輯個人資料' }}
+                                        name="HistoryDetail"
+                                        component={HistoryDetailScreen}
+                                        options={{
+                                            headerShown: true,
+                                            title: '打席詳情',
+                                            headerStyle: { backgroundColor: customTheme.colors.surface },
+                                            headerTintColor: customTheme.colors.onSurface,
+                                        }}
                                     />
-                                )}
-
-                                {/* 打席逐球紀錄列表頁 */}
-                                <Stack.Screen
-                                    name="BattingList"
-                                    component={BattingListScreen}
-                                    options={{
-                                        headerShown: true,
-                                        title: '打席紀錄',
-                                        headerStyle: { backgroundColor: customTheme.colors.surface },
-                                        headerTintColor: customTheme.colors.onSurface,
-                                    }}
-                                />
-
-                                {/* 打席詳情頁 */}
-                                <Stack.Screen
-                                    name="HistoryDetail"
-                                    component={HistoryDetailScreen}
-                                    options={{
-                                        headerShown: true,
-                                        title: '打席詳情',
-                                        headerStyle: { backgroundColor: customTheme.colors.surface },
-                                        headerTintColor: customTheme.colors.onSurface,
-                                    }}
-                                />
-                            </>
-                        ) : (
-                            // --- 完全未登入狀態 ---
-                            <Stack.Screen name="Login" component={LoginScreen} />
-                        )}
-                    </Stack.Navigator>
-                </NavigationContainer>
+                                </>
+                            ) : (
+                                // --- 完全未登入狀態 ---
+                                <Stack.Screen name="Login" component={LoginScreen} />
+                            )}
+                        </Stack.Navigator>
+                    </NavigationContainer>
+                    <CustomAlertModal />
+                </AlertProvider>
             </PaperProvider>
         </SafeAreaProvider>
     );

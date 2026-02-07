@@ -1,9 +1,12 @@
+// src/hooks/useEditProfile.js
+// 編輯個人介面的相關邏輯
 import { useState } from 'react';
-import { Alert } from 'react-native';
+// import { Alert } from 'react-native'; // 1. 移除 Alert
 import * as ImagePicker from 'expo-image-picker';
 import { auth } from '../services/firebaseService';
 import { updateUserProfile, updateUserPassword, deleteUserAccount, linkGoogleAccount, unlinkGoogleAccount } from '../services/authService';
 import { uploadProfileImage } from '../services/storageService';
+import { useAlert } from '../context/AlertContext'; // 2. 引入 useAlert
 
 export const useEditProfile = (navigation) => {
     const user = auth.currentUser;
@@ -12,15 +15,15 @@ export const useEditProfile = (navigation) => {
     const [photoURL, setPhotoURL] = useState(user?.photoURL);
     const [loading, setLoading] = useState(false);
 
-    // 判斷是否為 Google 登入
     const isGoogleUser = user?.providerData.some(p => p.providerId === 'google.com');
+    const { showError, showSuccess, showWarning, showInfo } = useAlert(); // 3. 取得 alert 方法
 
     // 1. 選取圖片邏輯
     const pickImage = async () => {
         try {
             const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
             if (status !== 'granted') {
-                Alert.alert("權限不足", "需要相簿權限才能更換頭貼");
+                showWarning("權限不足", "需要相簿權限才能更換頭貼");
                 return;
             }
 
@@ -36,7 +39,7 @@ export const useEditProfile = (navigation) => {
             }
         } catch (error) {
             console.error('選取圖片失敗:', error);
-            Alert.alert("錯誤", "無法開啟相簿，請稍後再試");
+            showError("錯誤", "無法開啟相簿，請稍後再試");
         }
     };
 
@@ -68,15 +71,15 @@ export const useEditProfile = (navigation) => {
                 await updateUserPassword(password);
             }
 
-            Alert.alert("成功", "個人資料已更新", [
+            showSuccess("成功", "個人資料已更新", [
                 { text: "確定", onPress: () => navigation.goBack() }
             ]);
         } catch (error) {
             console.error(error);
             if (error.code === 'auth/requires-recent-login') {
-                Alert.alert("需要重新登入", "為了安全起見，修改密碼前請先登出並重新登入。");
+                showWarning("需要重新登入", "為了安全起見，修改密碼前請先登出並重新登入。");
             } else {
-                Alert.alert("更新失敗", error.message);
+                showError("更新失敗", error.message);
             }
         } finally {
             setLoading(false);
@@ -86,7 +89,7 @@ export const useEditProfile = (navigation) => {
     // 3. 連結 Google 帳號
     const handleLinkGoogle = async () => {
         if (isGoogleUser) {
-            Alert.alert("提示", "您的帳號已連結 Google");
+            showInfo("提示", "您的帳號已連結 Google");
             return;
         }
 
@@ -94,15 +97,15 @@ export const useEditProfile = (navigation) => {
             setLoading(true);
             await linkGoogleAccount();
             // 連結成功後返回上一頁，讓 ProfileScreen 重新載入使用者狀態
-            Alert.alert("成功", "已成功連結 Google 帳號！", [
+            showSuccess("成功", "已成功連結 Google 帳號！", [
                 { text: "確定", onPress: () => navigation.goBack() }
             ]);
         } catch (error) {
             console.error('連結 Google 失敗:', error);
             if (error.code === 'auth/credential-already-in-use') {
-                Alert.alert("提醒", "此 Google 帳號已有其他紀錄，請登出後再重新嘗試。");
+                showWarning("提醒", "此 Google 帳號已有其他紀錄，請登出後再重新嘗試。");
             } else {
-                Alert.alert("連結失敗", error.message || "無法連結 Google 帳號");
+                showError("連結失敗", error.message || "無法連結 Google 帳號");
             }
         } finally {
             setLoading(false);
@@ -112,28 +115,28 @@ export const useEditProfile = (navigation) => {
     // 4. 解除連結 Google 帳號
     const handleUnlinkGoogle = async () => {
         if (!isGoogleUser) {
-            Alert.alert("提示", "您的帳號尚未連結 Google");
+            showInfo("提示", "您的帳號尚未連結 Google");
             return;
         }
 
-        Alert.alert(
+        showWarning(
             "解除連結",
             "確定要解除與 Google 帳號的連結嗎？解除後將無法使用 Google 一鍵登入此帳號。",
             [
-                { text: "取消", style: "cancel" },
+                { text: "取消", style: 'cancel' },
                 {
                     text: "確認解除",
-                    style: "destructive",
+                    // style: "destructive", // CustomAlertModal 對應 style 處理
                     onPress: async () => {
                         try {
                             setLoading(true);
                             await unlinkGoogleAccount();
-                            Alert.alert("成功", "已成功解除 Google 帳號連結！", [
+                            showSuccess("成功", "已成功解除 Google 帳號連結！", [
                                 { text: "確定", onPress: () => navigation.goBack() }
                             ]);
                         } catch (error) {
                             console.error('解除連結失敗:', error);
-                            Alert.alert("錯誤", error.message || "無法解除連結");
+                            showError("錯誤", error.message || "無法解除連結");
                         } finally {
                             setLoading(false);
                         }
@@ -145,23 +148,22 @@ export const useEditProfile = (navigation) => {
 
     // 5. 刪除帳號邏輯
     const handleDeleteAccount = () => {
-        Alert.alert(
+        showWarning(
             "危險操作",
             "確定要永久刪除帳號嗎？此動作無法復原，所有紀錄將被清除。",
             [
-                { text: "取消", style: "cancel" },
+                { text: "取消", style: 'cancel' },
                 {
                     text: "確認刪除",
-                    style: "destructive",
                     onPress: async () => {
                         try {
                             setLoading(true);
                             await deleteUserAccount();
                         } catch (error) {
                             if (error.code === 'auth/requires-recent-login') {
-                                Alert.alert("需要驗證", "刪除帳號屬於敏感操作，請先登出後重新登入再試。");
+                                showWarning("需要驗證", "刪除帳號屬於敏感操作，請先登出後重新登入再試。");
                             } else {
-                                Alert.alert("錯誤", error.message);
+                                showError("錯誤", error.message);
                             }
                         } finally {
                             setLoading(false);

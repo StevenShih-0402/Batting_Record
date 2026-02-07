@@ -1,13 +1,19 @@
+// src/hooks/auth/useLogin.js
+// 登入與註冊的業務邏輯
+
 import { useState } from 'react';
-import { Alert } from 'react-native';
 import {
     signInWithGoogle,
     signInAsGuest,
     signInWithEmail,
     signUpWithEmail,
 } from '../../services/authService';
+import { useAlert } from '../../context/AlertContext';
 
 export const useLogin = () => {
+    const { showError, showWarning } = useAlert(); // 1. 取得 alert 方法
+
+    // 定義狀態變數
     const [loading, setLoading] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -16,7 +22,7 @@ export const useLogin = () => {
 
     const handleEmailAuth = async () => {
         if (!email || !password) {
-            Alert.alert("提示", "請輸入電子郵件和密碼");
+            showWarning("提示", "請輸入電子郵件和密碼");
             return;
         }
         setLoading(true);
@@ -29,13 +35,13 @@ export const useLogin = () => {
             setLoading(false);
         } catch (error) {
             setLoading(false);
-            Alert.alert(isLoginMode ? "登入失敗" : "註冊失敗", error.message);
+            showError(isLoginMode ? "登入失敗" : "註冊失敗", error.message);
         }
     };
 
     const handleSocialLogin = async (providerName, loginFunction) => {
         if (!loginFunction) {
-            Alert.alert("提示", `${providerName} 登入功能尚未實作`);
+            showWarning("提示", `${providerName} 登入功能尚未實作`);
             return;
         }
 
@@ -45,7 +51,7 @@ export const useLogin = () => {
             setLoading(false);
         } catch (error) {
             setLoading(false);
-            Alert.alert(`${providerName} 登入失敗`, error.message);
+            showError(`${providerName} 登入失敗`, error.message);
         }
     };
 

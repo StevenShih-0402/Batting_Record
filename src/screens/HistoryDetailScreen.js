@@ -2,9 +2,10 @@
 // 顯示單一打席詳細資料的頁面 (九宮格與逐球列表)
 
 import React, { useState, useEffect } from 'react';
-import { View, ScrollView, StyleSheet, Alert, TouchableOpacity } from 'react-native';
+import { View, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text, Button, IconButton, useTheme, Divider, Surface } from 'react-native-paper';
+import { useAlert } from '../context/AlertContext';
 import { getColorByResult } from '../constants/Colors';
 
 // 使用與 StrikeZoneScreen 相同的九宮格組件
@@ -21,6 +22,7 @@ import PitchEditModal from '../components/modals/PitchEditModal';
 const HistoryDetailScreen = ({ navigation, route }) => {
     const theme = useTheme();
     const { record, onDeleteAtBat, onUpdatePitches } = route.params || {};
+    const { showWarning } = useAlert();
     const [localPitches, setLocalPitches] = useState([]);
     const [gridLayout, setGridLayout] = useState(null);
 
@@ -53,11 +55,11 @@ const HistoryDetailScreen = ({ navigation, route }) => {
 
     // 處理單顆球的刪除
     const handleDeleteSinglePitch = (index) => {
-        Alert.alert("刪除球點", "確定要刪除這顆球嗎？", [
+        showWarning("刪除球點", "確定要刪除這顆球嗎？", [
             { text: "取消", style: "cancel" },
             {
                 text: "刪除",
-                style: "destructive",
+                // style: "destructive", // CustomAlertModal 對應 style
                 onPress: async () => {
                     const newPitches = [...localPitches];
                     newPitches.splice(index, 1);
@@ -72,11 +74,11 @@ const HistoryDetailScreen = ({ navigation, route }) => {
 
     // 處理整筆紀錄刪除
     const handleDeleteWholeRecord = () => {
-        Alert.alert("刪除整筆紀錄", "確定要刪除這個打席的所有資料嗎？", [
+        showWarning("刪除整筆紀錄", "確定要刪除這個打席的所有資料嗎？", [
             { text: "取消", style: "cancel" },
             {
                 text: "確認刪除",
-                style: "destructive",
+                // style: "destructive", // CustomAlertModal 對應 style
                 onPress: async () => {
                     if (onDeleteAtBat) {
                         await onDeleteAtBat(record.id);

@@ -1,22 +1,25 @@
 // src/screens/ProfileScreen.js
+// 個人中心頁面
 import React from 'react';
 import { View, StyleSheet, Alert } from 'react-native';
 import { Text, Avatar, Button, List, Divider, useTheme } from 'react-native-paper';
 import { auth, sendVerification } from '../services/authService';
 import { useAuth } from '../hooks/auth/useAuth';
+import { useAlert } from '../context/AlertContext';
 
 const ProfileScreen = ({ navigation }) => {
     const theme = useTheme();
     const { user } = useAuth();
+    const { showSuccess, showWarning, showError, showMailSend } = useAlert();
 
     const handleLogout = async () => {
         const { signOutUser } = require('../services/authService');
         try {
             const success = await signOutUser();
             if (success) {
-                Alert.alert("已登出");
+                showSuccess("已登出");
             } else {
-                Alert.alert("提示", "訪客用戶無法登出，請先綁定 Google 或 Email 帳號");
+                showWarning("提示", "訪客用戶無法登出，請先綁定 Google 或 Email 帳號");
             }
         } catch (error) {
             console.error(error);
@@ -26,9 +29,9 @@ const ProfileScreen = ({ navigation }) => {
     const handleSendVerification = async () => {
         try {
             await sendVerification();
-            Alert.alert("成功", "已發送驗證信至您的信箱");
+            showMailSend("成功", "已發送驗證信至您的信箱");
         } catch (error) {
-            Alert.alert("錯誤", error.message);
+            showError("錯誤", error.message);
         }
     };
 
