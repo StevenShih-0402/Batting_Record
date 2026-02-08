@@ -65,22 +65,19 @@ const EditProfileScreen = ({ navigation }) => {
                             />
                         </List.Section>
 
-                        {/* 安全性設定 (僅限 Email 用戶顯示修改密碼) */}
-                        {!isGoogleUser && (
-                            <List.Section title="安全性">
-                                <TextInput
-                                    label="設定新密碼 (下次登入生效)"
-                                    value={form.password}
-                                    onChangeText={form.setPassword}
-                                    mode="outlined"
-                                    secureTextEntry
-                                    style={styles.input}
-                                    placeholder="若不修改請留空"
-                                    left={<TextInput.Icon icon="key" />}
-                                />
-
-                            </List.Section>
-                        )}
+                        {/* 安全性設定 (所有用戶皆可修改/設定密碼) */}
+                        <List.Section title="安全性">
+                            <TextInput
+                                label="設定新密碼 (下次登入生效)"
+                                value={form.password}
+                                onChangeText={form.setPassword}
+                                mode="outlined"
+                                secureTextEntry
+                                style={styles.input}
+                                placeholder="若不修改請留空"
+                                left={<TextInput.Icon icon="key" />}
+                            />
+                        </List.Section>
 
                         {/* 連結帳號狀態 */}
                         <List.Section title="連結帳號">

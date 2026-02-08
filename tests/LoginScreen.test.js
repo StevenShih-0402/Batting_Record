@@ -8,6 +8,16 @@ import { useLogin } from '../src/hooks/auth/useLogin';
 // Mock the hook
 jest.mock('../src/hooks/auth/useLogin');
 
+// Mock AlertContext
+const mockShowSuccess = jest.fn();
+jest.mock('../src/context/AlertContext', () => ({
+    useAlert: () => ({
+        showSuccess: mockShowSuccess,
+        showError: jest.fn(),
+        showWarning: jest.fn(),
+    }),
+}));
+
 // Mock @expo/vector-icons
 jest.mock('@expo/vector-icons', () => {
     const { View } = require('react-native');
@@ -86,6 +96,8 @@ jest.mock('react-native-paper', () => {
 // Mock navigation
 const mockNavigation = {
     navigate: jest.fn(),
+    replace: jest.fn(),
+    goBack: jest.fn(),
 };
 
 describe('LoginScreen', () => {
@@ -195,11 +207,33 @@ describe('LoginScreen', () => {
 
         it('執行 Google 社群登入', () => {
             const { getByTestId } = renderScreen();
-            // Find custom mocked button by testID
             const googleBtn = getByTestId('google-login-btn');
             fireEvent.press(googleBtn);
-            // Correctly expect handleSocialLogin to be called with arguments
             expect(mockHandleSocialLogin).toHaveBeenCalledWith('Google', mockSignInWithGoogle);
+        });
+
+        it('Google 帳號升級成功後導向', async () => {
+            // Mock handleSocialLogin to return upgrade result
+            mockHandleSocialLogin.mockResolvedValue({ user: { uid: '123' }, isUpgrade: true });
+
+            const { getByTestId } = renderScreen();
+            const googleBtn = getByTestId('google-login-btn');
+
+            await fireEvent.press(googleBtn);
+
+            // Verify showSuccess was called
+            expect(mockShowSuccess).toHaveBeenCalledWith(
+                "帳號升級成功",
+                "已成功將匿名帳號升級為 Google 帳號！\n\n為了日後方便登入，建議設定一組新密碼。",
+                expect.any(Array)
+            );
+
+            // Simulate pressing "前往設定" (first button)
+            const buttons = mockShowSuccess.mock.calls[0][2];
+            buttons[0].onPress();
+
+            // Verify navigation
+            expect(mockNavigation.replace).toHaveBeenCalledWith('EditProfile');
         });
     });
 });

@@ -21,6 +21,15 @@ GoogleSignin.configure({
     webClientId: process.env.EXPO_PUBLIC_FIREBASE_WEB_CLIENT_ID,
 });
 
+// redirect target logic
+let _redirectTarget = null;
+export const setPostLoginRedirect = (target) => { _redirectTarget = target; };
+export const consumePostLoginRedirect = () => {
+    const target = _redirectTarget;
+    _redirectTarget = null;
+    return target;
+};
+
 /**
  * Google 登入流程
  * 如果使用者當前是匿名，會嘗試將 Google 帳號「綁定」到該匿名帳號，實現資料無痛轉移。
@@ -43,25 +52,27 @@ export const signInWithGoogle = async () => {
         // D. 關鍵邏輯：綁定 vs 直接登入
         if (currentUser && currentUser.isAnonymous) {
             try {
-                // 老油條密技：嘗試把 Google 綁定到現在的匿名帳號
-                await linkWithCredential(currentUser, credential);
+                // 嘗試把 Google 綁定到現在的匿名帳號
+                const userCredential = await linkWithCredential(currentUser, credential);
                 console.log("匿名帳號成功升級為 Google 帳號");
-                return currentUser;
+                return { user: userCredential.user, isUpgrade: true };
             } catch (linkError) {
                 // 如果綁定失敗 (通常是因為該 Google 帳號已經有別的資料了)
                 // 這裡看你的產品策略，通常是切換過去該 Google 帳號
                 if (linkError.code === 'auth/credential-already-in-use') {
                     console.log("此 Google 帳號已有資料，將切換帳號");
-                    return await signInWithCredential(auth, credential);
+                    const userCredential = await signInWithCredential(auth, credential);
+                    return { user: userCredential.user, isUpgrade: false };
                 }
                 throw linkError;
             }
         } else {
             // 如果沒登入，就直接用 Google 登入
-            return await signInWithCredential(auth, credential);
+            const userCredential = await signInWithCredential(auth, credential);
+            return { user: userCredential.user, isUpgrade: false };
         }
     } catch (error) {
-        if (error.code === 'auth/email-already-in-use') throw new Error('此 Google 帳號已有資料');
+        if (error.code === 'auth/email-already-in-use') throw new Error('此 Google 帳號的 Email 已註冊過，建議用 Email 登入後進行帳號綁定。');
         console.error("Google Sign-In Error:", error);
         throw error;
     }
@@ -123,6 +134,7 @@ export const signInWithEmail = async (email, password) => {
     } catch (error) {
         if (error.code === 'auth/user-not-found') throw new Error('找不到此帳號');
         if (error.code === 'auth/wrong-password') throw new Error('密碼錯誤');
+        if (error.code === 'auth/invalid-credential') throw new Error('Email 或密碼錯誤');
         throw error;
     }
 };

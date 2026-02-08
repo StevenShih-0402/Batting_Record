@@ -12,7 +12,25 @@ import HistoryScreen from '../screens/HistoryScreen';
 
 const Tab = createBottomTabNavigator();
 
-const MainTabs = ({ user }) => {
+import { consumePostLoginRedirect } from '../services/authService';
+
+const MainTabs = ({ user, navigation }) => {
+    // 檢查是否有待處理的導向 (例如刪除帳號後回到 Profile)
+    React.useEffect(() => {
+        const target = consumePostLoginRedirect();
+        if (target) {
+            // 使用 setTimeout 確保導航器已準備好
+            setTimeout(() => {
+                // HACK: 如果目標是 Tab 頁面 (Profile)，需指定巢狀導航
+                // 否則 Stack Navigator 可能找不到 Profile
+                if (target === 'Profile') {
+                    navigation.navigate('MainTabs', { screen: 'Profile' });
+                } else {
+                    navigation.navigate(target);
+                }
+            }, 100);
+        }
+    }, [navigation, user]);
     const insets = useSafeAreaInsets();
     const theme = useTheme();
 

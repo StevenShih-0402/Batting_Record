@@ -78,18 +78,22 @@ export const useLogin = () => {
     };
 
     const handleSocialLogin = async (providerName, loginFunction) => {
+
+        // 檢查登入功能是否實作 (方便後續擴充)
         if (!loginFunction) {
             showWarning("提示", `${providerName} 登入功能尚未實作`);
-            return;
+            return null;
         }
 
         setLoading(true);
         try {
-            await loginFunction();
+            const result = await loginFunction();
             setLoading(false);
+            return result;
         } catch (error) {
             setLoading(false);
             showError(`${providerName} 登入失敗`, error.message);
+            return null;
         }
     };
 

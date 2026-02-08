@@ -114,11 +114,12 @@ const styles = StyleSheet.create({
     },
     actions: {
         justifyContent: 'center', // Center buttons
-        paddingBottom: 10,
-        flexWrap: 'nowrap', // Allow wrapping if many buttons
+        padding: 10,
+        flexWrap: 'wrap', // Allow wrapping if many buttons
     },
     button: {
         marginHorizontal: 5,
+        marginVertical: 5,
         minWidth: 80,
     }
 });

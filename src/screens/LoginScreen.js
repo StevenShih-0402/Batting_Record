@@ -6,10 +6,12 @@ import { Text, Button, useTheme, Surface, TextInput, Divider } from 'react-nativ
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useLogin } from '../hooks/auth/useLogin';
+import { useAlert } from '../context/AlertContext';
 
 const LoginScreen = ({ navigation }) => {
     const theme = useTheme();
     const { state, actions } = useLogin();
+    const { showSuccess } = useAlert();
     const {
         loading, email, setEmail, password, setPassword,
         confirmPassword, setConfirmPassword, // Added
@@ -91,23 +93,38 @@ const LoginScreen = ({ navigation }) => {
                     </Text>
                 </TouchableOpacity>
 
-                {/* 分隔線 */}
-                <View style={styles.dividerContainer}>
-                    <Divider style={{ flex: 1 }} />
-                    <Text style={{ marginHorizontal: 10, color: theme.colors.onSurfaceVariant }}>或是</Text>
-                    <Divider style={{ flex: 1 }} />
-                </View>
+                {/* 外部登入方法：只在登入時顯示 */}
 
-                {/* 社群登入按鈕列 */}
-                <View style={styles.socialRow}>
-                    {/* Google */}
-                    <SocialButton
-                        icon="google"
-                        color="#DB4437"
-                        onPress={() => actions.handleSocialLogin('Google', actions.signInWithGoogle)}
-                        testID="google-login-btn"
-                    />
-                </View>
+                {/* 分隔線 */}
+                {isLoginMode && (
+                    <View style={styles.dividerContainer}>
+                        <Divider style={{ flex: 1 }} />
+                        <Text style={{ marginHorizontal: 10, color: theme.colors.onSurfaceVariant }}>或是</Text>
+                        <Divider style={{ flex: 1 }} />
+                    </View>
+                )}
+
+                {/* Google 登入按鈕：只在登入時顯示 */}
+                {isLoginMode && (
+                    <View style={styles.socialRow}>
+                        <SocialButton
+                            icon="google"
+                            color="#DB4437"
+                            onPress={async () => {
+                                const result = await actions.handleSocialLogin('Google', actions.signInWithGoogle);
+                                if (result?.isUpgrade) {
+                                    showSuccess("帳號建立成功", "為了日後方便登入，建議設定一組新密碼。", [
+                                        { text: "前往設定", onPress: () => navigation.replace('EditProfile') },
+                                        { text: "稍後再說", onPress: () => navigation.goBack() }
+                                    ]);
+                                } else if (result) {
+                                    navigation.goBack();
+                                }
+                            }}
+                            testID="google-login-btn"
+                        />
+                    </View>
+                )}
             </Surface>
         </SafeAreaView>
     );

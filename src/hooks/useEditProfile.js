@@ -4,7 +4,7 @@ import { useState } from 'react';
 // import { Alert } from 'react-native'; // 1. 移除 Alert
 import * as ImagePicker from 'expo-image-picker';
 import { auth } from '../services/firebaseService';
-import { updateUserProfile, updateUserPassword, deleteUserAccount, linkGoogleAccount, unlinkGoogleAccount } from '../services/authService';
+import { updateUserProfile, updateUserPassword, deleteUserAccount, linkGoogleAccount, unlinkGoogleAccount, setPostLoginRedirect } from '../services/authService';
 import { uploadProfileImage } from '../services/storageService';
 import { useAlert } from '../context/AlertContext'; // 2. 引入 useAlert
 
@@ -67,7 +67,7 @@ export const useEditProfile = (navigation) => {
                 await updateUserProfile(updates);
             }
 
-            if (!isGoogleUser && password.length > 0) {
+            if (password.length > 0) {
                 await updateUserPassword(password);
             }
 
@@ -158,7 +158,14 @@ export const useEditProfile = (navigation) => {
                     onPress: async () => {
                         try {
                             setLoading(true);
+                            
+                            // 設定刪除後導向 Profile (此時會是訪客身份)
+                            setPostLoginRedirect('Profile');
+
                             await deleteUserAccount();
+
+                            // 通知使用者
+                            showSuccess("帳號已刪除");
                         } catch (error) {
                             if (error.code === 'auth/requires-recent-login') {
                                 showWarning("需要驗證", "刪除帳號屬於敏感操作，請先登出後重新登入再試。");

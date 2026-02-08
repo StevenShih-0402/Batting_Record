@@ -49,28 +49,24 @@ const App = () => {
                                     </Stack.Screen>
 
                                     {/* 如果是訪客，我們把 Login 加入路由表，讓 Profile 可以 navigate 到它 */}
-                                    {user.isAnonymous && (
-                                        <Stack.Screen
-                                            name="Login"
-                                            component={LoginScreen}
-                                            options={{
-                                                presentation: 'modal', // 下方滑入效果
-                                                headerShown: true,
-                                                title: '帳號綁定',
-                                                headerStyle: { backgroundColor: customTheme.colors.surface },
-                                                headerTintColor: customTheme.colors.onSurface,
-                                            }}
-                                        />
-                                    )}
+                                    <Stack.Screen
+                                        name="Login"
+                                        component={LoginScreen}
+                                        options={{
+                                            presentation: 'modal', // 下方滑入效果
+                                            headerShown: true,
+                                            title: '帳號綁定',
+                                            headerStyle: { backgroundColor: customTheme.colors.surface },
+                                            headerTintColor: customTheme.colors.onSurface,
+                                        }}
+                                    />
 
-                                    {/* 只有登入用戶(非訪客)才能進入編輯頁面，雖然 ProfileScreen 會擋，但這裡也加上判斷較保險 */}
-                                    {!user.isAnonymous && (
-                                        <Stack.Screen
-                                            name="EditProfile"
-                                            component={EditProfileScreen}
-                                            options={{ title: '編輯個人資料' }}
-                                        />
-                                    )}
+                                    {/* 編輯個人資料頁面 */}
+                                    <Stack.Screen
+                                        name="EditProfile"
+                                        component={EditProfileScreen}
+                                        options={{ title: '編輯個人資料' }}
+                                    />
 
                                     {/* 打席逐球紀錄列表頁 */}
                                     <Stack.Screen
