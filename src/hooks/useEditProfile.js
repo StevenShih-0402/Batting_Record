@@ -4,7 +4,7 @@ import { useState } from 'react';
 // import { Alert } from 'react-native'; // 1. 移除 Alert
 import * as ImagePicker from 'expo-image-picker';
 import { auth } from '../services/firebaseService';
-import { updateUserProfile, updateUserPassword, deleteUserAccount, linkGoogleAccount, unlinkGoogleAccount, setPostLoginRedirect } from '../services/authService';
+import { reauthenticateUser, updateUserProfile, updateUserPassword, deleteUserAccount, linkGoogleAccount, unlinkGoogleAccount, setPostLoginRedirect } from '../services/authService';
 import { uploadProfileImage } from '../services/storageService';
 import { useAlert } from '../context/AlertContext'; // 2. 引入 useAlert
 
@@ -12,10 +12,14 @@ export const useEditProfile = (navigation) => {
     const user = auth.currentUser;
     const [displayName, setDisplayName] = useState(user?.displayName || '');
     const [password, setPassword] = useState('');
+    const [currentPassword, setCurrentPassword] = useState(''); // 新增：當前密碼欄位
     const [photoURL, setPhotoURL] = useState(user?.photoURL);
     const [loading, setLoading] = useState(false);
 
     const isGoogleUser = user?.providerData.some(p => p.providerId === 'google.com');
+    // 檢查使用者是否有 Email/Password 登入方式
+    const hasPasswordProvider = user?.providerData.some(p => p.providerId === 'password');
+
     const { showError, showSuccess, showWarning, showInfo } = useAlert(); // 3. 取得 alert 方法
 
     // 1. 選取圖片邏輯
@@ -46,7 +50,30 @@ export const useEditProfile = (navigation) => {
     // 2. 儲存變更邏輯
     const handleSave = async () => {
         setLoading(true);
+
         try {
+            // A. 驗證密碼邏輯 (如果使用者想改密碼)
+            if (password.length > 0) {
+                // 如果原本就有密碼，才需要驗證舊密碼
+                if (hasPasswordProvider) {
+                    if (!currentPassword) {
+                        showWarning("驗證失敗", "修改密碼前，請輸入目前的密碼以確認身分。");
+                        setLoading(false);
+                        return;
+                    }
+
+                    try {
+                        await reauthenticateUser(currentPassword);
+                    } catch (error) {
+                        showError("驗證失敗", "目前密碼錯誤，請重新輸入");
+                        setLoading(false);
+                        return;
+                    }
+                }
+                // 如果沒有密碼 (例如純 Google 用戶想設密碼)，則跳過驗證步驟，直接嘗試設定
+            }
+
+            // B. 準備更新資料
             const updates = {};
             if (displayName !== user.displayName) {
                 updates.displayName = displayName;
@@ -69,15 +96,17 @@ export const useEditProfile = (navigation) => {
 
             if (password.length > 0) {
                 await updateUserPassword(password);
+                // 清空密碼欄位
+                setPassword('');
+                setCurrentPassword('');
             }
 
             showSuccess("成功", "個人資料已更新", [
                 { text: "確定", onPress: () => navigation.goBack() }
             ]);
         } catch (error) {
-            console.error(error);
             if (error.code === 'auth/requires-recent-login') {
-                showWarning("需要重新登入", "為了安全起見，修改密碼前請先登出並重新登入。");
+                showWarning("需要重新登入", "為了安全起見，請先登出並重新登入後再設定密碼。");
             } else {
                 showError("更新失敗", error.message);
             }
@@ -158,7 +187,7 @@ export const useEditProfile = (navigation) => {
                     onPress: async () => {
                         try {
                             setLoading(true);
-                            
+
                             // 設定刪除後導向 Profile (此時會是訪客身份)
                             setPostLoginRedirect('Profile');
 
@@ -184,12 +213,15 @@ export const useEditProfile = (navigation) => {
     return {
         user,
         isGoogleUser,
+        hasPasswordProvider, // Export this to UI
         loading,
         form: {
             displayName,
             setDisplayName,
-            password,
+            password,      // 新密碼
             setPassword,
+            currentPassword, // 當前密碼
+            setCurrentPassword,
             photoURL,
             pickImage,
         },

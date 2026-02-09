@@ -10,6 +10,7 @@ const EditProfileScreen = ({ navigation }) => {
     const {
         user,
         isGoogleUser,
+        hasPasswordProvider,
         loading,
         form,
         actions
@@ -77,6 +78,20 @@ const EditProfileScreen = ({ navigation }) => {
                                 placeholder="若不修改請留空"
                                 left={<TextInput.Icon icon="key" />}
                             />
+
+                            {/* 當有輸入新密碼時，若使用者原本就有密碼，才顯示輸入舊密碼的欄位 */}
+                            {form.password.length > 0 && hasPasswordProvider && (
+                                <TextInput
+                                    label="請輸入目前的密碼 (驗證身分)"
+                                    value={form.currentPassword}
+                                    onChangeText={form.setCurrentPassword}
+                                    mode="outlined"
+                                    secureTextEntry
+                                    style={[styles.input, { borderColor: theme.colors.error }]} // 稍微顯眼一點
+                                    left={<TextInput.Icon icon="lock-check" color={theme.colors.error} />}
+                                    error={!form.currentPassword}
+                                />
+                            )}
                         </List.Section>
 
                         {/* 連結帳號狀態 */}

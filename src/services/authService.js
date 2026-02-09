@@ -225,7 +225,26 @@ export const deleteUserAccount = async () => {
     await deleteUser(user);
 };
 
-// 6. 發送驗證信
+// 6. 重新驗證 (用於敏感操作如修改密碼/刪除帳號)
+export const reauthenticateUser = async (password) => {
+    const user = auth.currentUser;
+    if (!user) throw new Error("使用者尚未登入");
+
+    // 這裡主要針對 Email 登入的使用者
+    const { EmailAuthProvider, reauthenticateWithCredential } = require('firebase/auth');
+    const credential = EmailAuthProvider.credential(user.email, password);
+
+    try {
+        await reauthenticateWithCredential(user, credential);
+        return true;
+    } catch (error) {
+        console.error("重新驗證失敗:", error);
+        if (error.code === 'auth/wrong-password') throw new Error('密碼錯誤');
+        throw error;
+    }
+};
+
+// 7. 發送驗證信
 export const sendVerification = async () => {
     const user = auth.currentUser;
     if (!user) throw new Error("使用者尚未登入");

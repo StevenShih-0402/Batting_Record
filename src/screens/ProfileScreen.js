@@ -77,7 +77,12 @@ const ProfileScreen = ({ navigation }) => {
                             onPress={() => navigation.navigate('EditProfile')}
                         />
 
-
+                        <List.Item
+                            title="偏好設定"
+                            description="自訂球種、結果與主題色"
+                            left={props => <List.Icon {...props} icon="cog" />}
+                            onPress={() => navigation.navigate('Preference')}
+                        />
 
                         <List.Item
                             title="登出"

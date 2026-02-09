@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { Modal, Portal, Text, Button, useTheme, IconButton } from 'react-native-paper';
 import { getColorByResult } from '../../constants/Colors';
-import { PITCH_TYPES_ZH } from '../../constants/GameConstants';
+import { usePreferences } from '../../context/PreferencesContext'; // 引入 context
 
 // 匯入表單元件
 import SelectionDropdown from '../forms/SelectionDropdown';
@@ -17,9 +17,10 @@ import { usePitchEdit } from '../../hooks/ui/usePitchEdit';
 
 const PitchEditModal = ({ isVisible, record, onClose, onSave, onDelete, isSaving }) => {
     const theme = useTheme();
+    const { pitchTypes } = usePreferences(); // 取得動態球種列表
 
     // 使用自定義 Hook
-    const { formState, setSpeed, setPitchType, setNote, handleSave } = 
+    const { formState, setSpeed, setPitchType, setNote, handleSave } =
         usePitchEdit(record, isVisible, onSave);
 
     if (!record) return null;
@@ -50,21 +51,21 @@ const PitchEditModal = ({ isVisible, record, onClose, onSave, onDelete, isSaving
                     </View>
 
                     {/* 2. 球種表單選單 (Inline) */}
-                    <SelectionDropdown 
+                    <SelectionDropdown
                         label="球種"
                         selectedValue={formState.pitchType}
-                        options={PITCH_TYPES_ZH}
+                        options={pitchTypes} // 使用動態列表
                         onSelect={setPitchType}
                     />
 
                     {/* 3. 球速輸入 (數值輸入優化) */}
-                    <SpeedInput 
+                    <SpeedInput
                         value={formState.speed}
                         onChangeText={setSpeed}
                     />
 
                     {/* 4. 備註輸入 */}
-                    <NoteInput 
+                    <NoteInput
                         value={formState.note}
                         onChangeText={setNote}
                     />
@@ -73,19 +74,19 @@ const PitchEditModal = ({ isVisible, record, onClose, onSave, onDelete, isSaving
                 {/* 按鈕區域 */}
                 <View style={styles.footer}>
                     {/* 左側：刪除按鈕 (危險操作) */}
-                    <Button 
-                        mode="text" 
-                        onPress={() => onDelete(record.id)} 
+                    <Button
+                        mode="text"
+                        onPress={() => onDelete(record.id)}
                         textColor={theme.colors.error}
                         icon="trash-can-outline"
                     >
                         刪除
                     </Button>
 
-                    {/* 右側：儲存 */}     
-                    <Button 
-                        mode="contained" 
-                        onPress={handleSave} 
+                    {/* 右側：儲存 */}
+                    <Button
+                        mode="contained"
+                        onPress={handleSave}
                         loading={isSaving}
                         disabled={isSaving}
                         icon="pen"

@@ -1,5 +1,5 @@
 // App.js
-import React from 'react';
+import React, { useMemo } from 'react';
 import { SafeAreaProvider, initialWindowMetrics } from 'react-native-safe-area-context';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { NavigationContainer, DarkTheme as NavigationDarkTheme } from '@react-navigation/native';
@@ -12,95 +12,122 @@ import { useAuth } from './src/hooks/auth/useAuth';
 import EditProfileScreen from './src/screens/EditProfileScreen';
 import BattingListScreen from './src/screens/BattingListScreen';
 import HistoryDetailScreen from './src/screens/HistoryDetailScreen';
+import PreferenceScreen from './src/screens/PreferenceScreen'; // Import PreferenceScreen
 
 import MainTabs from './src/components/MainTabs';
 import { AlertProvider } from './src/context/AlertContext';
 import CustomAlertModal from './src/components/exception/CustomAlertModal';
+import { PreferencesProvider, usePreferences } from './src/context/PreferencesContext'; // Import Preferences Context
 
-const Stack = createNativeStackNavigator(); // 2. 建立 Stack 實例
+const Stack = createNativeStackNavigator();
 
-// 讓 React Navigation 的底層顏色也遵循我們的深色主題
-const CombinedDarkTheme = {
-    ...NavigationDarkTheme,
-    colors: {
-        ...NavigationDarkTheme.colors,
-        background: customTheme.colors.background, // 確保底層是全黑
-        card: customTheme.colors.surface,
-    },
-};
-
-
-const App = () => {
+// Inner component to consume usePreferences
+const MainContent = () => {
     const { user, isReady } = useAuth();
+    const { primaryColor } = usePreferences();
+
+    // Create dynamic theme
+    const dynamicTheme = useMemo(() => ({
+        ...customTheme,
+        colors: {
+            ...customTheme.colors,
+            primary: primaryColor,
+        }
+    }), [primaryColor]);
+
+    // Create dynamic navigation theme
+    const dynamicNavigationTheme = useMemo(() => ({
+        ...NavigationDarkTheme,
+        colors: {
+            ...NavigationDarkTheme.colors,
+            background: dynamicTheme.colors.background,
+            card: dynamicTheme.colors.surface,
+            primary: primaryColor, // Update navigation primary color too
+        },
+    }), [dynamicTheme, primaryColor]);
+
 
     if (!isReady) return null;
 
     return (
+        <PaperProvider theme={dynamicTheme}>
+            <AlertProvider>
+                <NavigationContainer theme={dynamicNavigationTheme}>
+                    <Stack.Navigator screenOptions={{ headerShown: false }}>
+                        {user ? (
+                            <>
+                                <Stack.Screen name="MainTabs">
+                                    {(props) => <MainTabs {...props} user={user} />}
+                                </Stack.Screen>
+
+                                <Stack.Screen
+                                    name="Login"
+                                    component={LoginScreen}
+                                    options={{
+                                        presentation: 'modal',
+                                        headerShown: true,
+                                        title: '帳號綁定',
+                                        headerStyle: { backgroundColor: dynamicTheme.colors.surface },
+                                        headerTintColor: dynamicTheme.colors.onSurface,
+                                    }}
+                                />
+
+                                <Stack.Screen
+                                    name="EditProfile"
+                                    component={EditProfileScreen}
+                                    options={{ title: '編輯個人資料' }}
+                                />
+
+                                <Stack.Screen
+                                    name="Preference"
+                                    component={PreferenceScreen}
+                                    options={{
+                                        title: '偏好設定',
+                                        headerShown: true,
+                                        headerStyle: { backgroundColor: dynamicTheme.colors.surface },
+                                        headerTintColor: dynamicTheme.colors.onSurface,
+                                    }}
+                                />
+
+                                <Stack.Screen
+                                    name="BattingList"
+                                    component={BattingListScreen}
+                                    options={{
+                                        headerShown: true,
+                                        title: '打席紀錄',
+                                        headerStyle: { backgroundColor: dynamicTheme.colors.surface },
+                                        headerTintColor: dynamicTheme.colors.onSurface,
+                                    }}
+                                />
+
+                                <Stack.Screen
+                                    name="HistoryDetail"
+                                    component={HistoryDetailScreen}
+                                    options={{
+                                        headerShown: true,
+                                        title: '打席詳情',
+                                        headerStyle: { backgroundColor: dynamicTheme.colors.surface },
+                                        headerTintColor: dynamicTheme.colors.onSurface,
+                                    }}
+                                />
+                            </>
+                        ) : (
+                            <Stack.Screen name="Login" component={LoginScreen} />
+                        )}
+                    </Stack.Navigator>
+                </NavigationContainer>
+                <CustomAlertModal />
+            </AlertProvider>
+        </PaperProvider>
+    );
+};
+
+const App = () => {
+    return (
         <SafeAreaProvider initialMetrics={initialWindowMetrics}>
-            <PaperProvider theme={customTheme}>
-                <AlertProvider>
-                    <NavigationContainer theme={CombinedDarkTheme}>
-                        <Stack.Navigator screenOptions={{ headerShown: false }}>
-                            {user ? (
-                                // --- 已登入或訪客狀態 ---
-                                <>
-                                    <Stack.Screen name="MainTabs">
-                                        {(props) => <MainTabs {...props} user={user} />}
-                                    </Stack.Screen>
-
-                                    {/* 如果是訪客，我們把 Login 加入路由表，讓 Profile 可以 navigate 到它 */}
-                                    <Stack.Screen
-                                        name="Login"
-                                        component={LoginScreen}
-                                        options={{
-                                            presentation: 'modal', // 下方滑入效果
-                                            headerShown: true,
-                                            title: '帳號綁定',
-                                            headerStyle: { backgroundColor: customTheme.colors.surface },
-                                            headerTintColor: customTheme.colors.onSurface,
-                                        }}
-                                    />
-
-                                    {/* 編輯個人資料頁面 */}
-                                    <Stack.Screen
-                                        name="EditProfile"
-                                        component={EditProfileScreen}
-                                        options={{ title: '編輯個人資料' }}
-                                    />
-
-                                    {/* 打席逐球紀錄列表頁 */}
-                                    <Stack.Screen
-                                        name="BattingList"
-                                        component={BattingListScreen}
-                                        options={{
-                                            headerShown: true,
-                                            title: '打席紀錄',
-                                            headerStyle: { backgroundColor: customTheme.colors.surface },
-                                            headerTintColor: customTheme.colors.onSurface,
-                                        }}
-                                    />
-
-                                    {/* 打席詳情頁 */}
-                                    <Stack.Screen
-                                        name="HistoryDetail"
-                                        component={HistoryDetailScreen}
-                                        options={{
-                                            headerShown: true,
-                                            title: '打席詳情',
-                                            headerStyle: { backgroundColor: customTheme.colors.surface },
-                                            headerTintColor: customTheme.colors.onSurface,
-                                        }}
-                                    />
-                                </>
-                            ) : (
-                                // --- 完全未登入狀態 ---
-                                <Stack.Screen name="Login" component={LoginScreen} />
-                            )}
-                        </Stack.Navigator>
-                    </NavigationContainer>
-                    <CustomAlertModal />
-                </AlertProvider>
-            </PaperProvider>
+            <PreferencesProvider>
+                <MainContent />
+            </PreferencesProvider>
         </SafeAreaProvider>
     );
 };

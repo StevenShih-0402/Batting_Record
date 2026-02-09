@@ -62,7 +62,10 @@ export const initAuthAndGetRecords = (setRecordsCallback, setLoadingCallback, us
     }, (error) => {
         setLoadingCallback(false);
         // 如果是權限錯誤且使用者已登出，則不顯示 Alert 避免干擾
-        if (error.code === 'permission-denied') return;
+        // 增加檢查 auth.currentUser 是否為 null，以及 error code 是否包含 permission
+        if (error.code === 'permission-denied' || error.message.includes('permission') || !auth.currentUser) return;
+
+        console.error("Firestore Listen Error:", error);
         Alert.alert("資料錯誤", "無法讀取歷史紀錄");
     });
 

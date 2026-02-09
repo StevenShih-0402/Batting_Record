@@ -91,6 +91,11 @@ export const getAtBatHistory = (userId, setRecordsCallback, setLoadingCallback) 
         setRecordsCallback(historyData);
         setLoadingCallback(false);
     }, (error) => {
+        // 如果是權限錯誤，通常是因為登出導致，忽略即可
+        if (error.code === 'permission-denied' || error.message.includes('permission')) {
+            setLoadingCallback(false);
+            return;
+        }
         console.error("讀取歷史失敗:", error);
         // 如果是索引錯誤 (Missing or insufficient permissions / Index required)，Firebase Console 會跳連結
         // 記得點擊 Console 裡的連結去建立複合索引 (Composite Index)
