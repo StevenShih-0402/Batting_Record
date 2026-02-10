@@ -58,6 +58,16 @@ const LoginScreen = ({ navigation }) => {
                     disabled={loading}
                 />
 
+                {/* 忘記密碼：只在登入時顯示 */}
+                {isLoginMode && (
+                    <TouchableOpacity
+                        onPress={actions.handleForgotPassword}
+                        style={{ alignSelf: 'flex-end', marginTop: 4, marginBottom: 12 }}
+                    >
+                        <Text style={{ color: theme.colors.primary, fontSize: 14 }}>忘記密碼？</Text>
+                    </TouchableOpacity>
+                )}
+
                 {/* 確認密碼：只在註冊時顯示 */}
                 {!isLoginMode && (
                     <TextInput

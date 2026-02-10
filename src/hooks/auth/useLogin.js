@@ -7,7 +7,8 @@ import {
     signInAsGuest,
     signInWithEmail,
     signUpWithEmail,
-    sendVerification, // Added
+    sendVerification,
+    sendResetPasswordEmail,
     signOutUser,
 } from '../../services/authService';
 import { useAlert } from '../../context/AlertContext';
@@ -97,6 +98,25 @@ export const useLogin = () => {
         }
     };
 
+
+
+    const handleForgotPassword = async () => {
+        if (!email) {
+            showWarning("提示", "請輸入電子郵件以接收重設密碼信");
+            return;
+        }
+
+        setLoading(true);
+        try {
+            await sendResetPasswordEmail(email);
+            showMailSend("已發送", "重設密碼信件已發送至您的電子郵件");
+        } catch (error) {
+            showError("發送失敗", error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return {
         state: {
             loading,
@@ -116,6 +136,7 @@ export const useLogin = () => {
         actions: {
             handleEmailAuth,
             handleSocialLogin,
+            handleForgotPassword,
             signInWithGoogle, // Export these for easy access in UI
             signInAsGuest
         }

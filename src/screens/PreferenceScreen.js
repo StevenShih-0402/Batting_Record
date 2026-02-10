@@ -13,7 +13,6 @@ const THEME_COLORS = [
     '#EF2B7C', // 粉紅色 (Fuchsia)
     '#FEF250', // 黃色 (Lemon Yellow)
     '#339C5E', // 綠色 (Kelly Green)
-    
     '#00E5FF', // 預設青色 (Cyan)
     '#B026FF', // 紫色 (Neon Purple)
     '#F2D3BC', // 膚色 (Skin)

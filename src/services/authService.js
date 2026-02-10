@@ -250,3 +250,15 @@ export const sendVerification = async () => {
     if (!user) throw new Error("使用者尚未登入");
     await sendEmailVerification(user);
 };
+
+// 8. 發送重設密碼信
+export const sendResetPasswordEmail = async (email) => {
+    const { sendPasswordResetEmail } = require('firebase/auth');
+    try {
+        await sendPasswordResetEmail(auth, email);
+    } catch (error) {
+        if (error.code === 'auth/user-not-found') throw new Error('找不到此 Email 的帳號');
+        if (error.code === 'auth/invalid-email') throw new Error('Email 格式錯誤');
+        throw error;
+    }
+};
