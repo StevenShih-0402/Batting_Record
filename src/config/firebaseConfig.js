@@ -14,14 +14,14 @@ const firebaseConfig = {
 };
 
 // 組合路徑：利用 APP_ID 變數和路徑片段來構建
-const PITCH_RECORDS_PATH = 
-    `${process.env.EXPO_PUBLIC_ARTIFACTS_PREFIX}/${APP_ID}${process.env.EXPO_PUBLIC_PITCH_RECORDS_SUFFIX}`;
+const BATTING_RECORDS_PATH = 
+    `${process.env.EXPO_PUBLIC_ARTIFACTS_PREFIX}/${APP_ID}${process.env.EXPO_PUBLIC_BATTING_RECORDS_SUFFIX}`;
     
 const AT_BAT_SUMMARY_PATH = 
     `${process.env.EXPO_PUBLIC_ARTIFACTS_PREFIX}/${APP_ID}${process.env.EXPO_PUBLIC_AT_BAT_SUMMARY_SUFFIX}`;
 
 export { 
     firebaseConfig, 
-    PITCH_RECORDS_PATH, 
+    BATTING_RECORDS_PATH, 
     AT_BAT_SUMMARY_PATH 
 };

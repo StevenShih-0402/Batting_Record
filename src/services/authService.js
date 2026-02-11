@@ -1,0 +1,264 @@
+// src/services/authService.js
+// Google 登入相關方法
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import {
+    GoogleAuthProvider,
+    signInWithCredential,
+    linkWithCredential,
+    signInAnonymously,
+    createUserWithEmailAndPassword,  // 信箱登入
+    signInWithEmailAndPassword,      // 信箱登入 
+    updateProfile,
+    updatePassword,
+    deleteUser,
+    sendEmailVerification,
+    unlink,
+} from 'firebase/auth';
+import { auth } from './firebaseService'; //
+
+// 1. 設定 Google Sign-In (請去 Firebase Console -> Auth 啟用 Google 並拿 Web Client ID)
+GoogleSignin.configure({
+    webClientId: process.env.EXPO_PUBLIC_FIREBASE_WEB_CLIENT_ID,
+});
+
+// redirect target logic
+let _redirectTarget = null;
+export const setPostLoginRedirect = (target) => { _redirectTarget = target; };
+export const consumePostLoginRedirect = () => {
+    const target = _redirectTarget;
+    _redirectTarget = null;
+    return target;
+};
+
+/**
+ * Google 登入流程
+ * 如果使用者當前是匿名，會嘗試將 Google 帳號「綁定」到該匿名帳號，實現資料無痛轉移。
+ */
+export const signInWithGoogle = async () => {
+    try {
+        // A. 檢查是否支援
+        await GoogleSignin.hasPlayServices();
+
+        // B. 跳出 Google 選擇帳號視窗
+        const userInfo = await GoogleSignin.signIn();
+        const idToken = userInfo.data?.idToken;
+
+        if (!idToken) throw new Error('無法取得 Google Token');
+
+        // C. 建立 Firebase 憑證
+        const credential = GoogleAuthProvider.credential(idToken);
+        const currentUser = auth.currentUser;
+
+        // D. 關鍵邏輯：綁定 vs 直接登入
+        if (currentUser && currentUser.isAnonymous) {
+            try {
+                // 嘗試把 Google 綁定到現在的匿名帳號
+                const userCredential = await linkWithCredential(currentUser, credential);
+                console.log("匿名帳號成功升級為 Google 帳號");
+                return { user: userCredential.user, isUpgrade: true };
+            } catch (linkError) {
+                // 如果綁定失敗 (通常是因為該 Google 帳號已經有別的資料了)
+                // 這裡看你的產品策略，通常是切換過去該 Google 帳號
+                if (linkError.code === 'auth/credential-already-in-use') {
+                    console.log("此 Google 帳號已有資料，將切換帳號");
+                    const userCredential = await signInWithCredential(auth, credential);
+                    return { user: userCredential.user, isUpgrade: false };
+                }
+                throw linkError;
+            }
+        } else {
+            // 如果沒登入，就直接用 Google 登入
+            const userCredential = await signInWithCredential(auth, credential);
+            return { user: userCredential.user, isUpgrade: false };
+        }
+    } catch (error) {
+        if (error.code === 'auth/email-already-in-use') throw new Error('此 Google 帳號的 Email 已註冊過，建議用 Email 登入後進行帳號綁定。');
+        console.error("Google Sign-In Error:", error);
+        throw error;
+    }
+};
+
+/**
+ * 登出
+ * 重要：匿名用戶不會被登出，因為登出後 Firebase 會產生新的匿名帳號，
+ * 導致原本的資料無法關聯。這是 Expo/React Native 專案的標準做法。
+ * 
+ * @returns {boolean} 是否成功登出。false 表示用戶是匿名的，無法登出。
+ */
+export const signOutUser = async () => {
+    try {
+        const currentUser = auth.currentUser;
+
+        // 如果是匿名用戶，不執行登出
+        if (currentUser?.isAnonymous) {
+            console.log('匿名用戶無法登出，請先綁定 Google 或 Email 帳號');
+            return false;
+        }
+
+        await GoogleSignin.signOut(); // 清除 Google 登入狀態
+        await auth.signOut();         // 清除 Firebase 狀態
+        // 登出後 useAuth 的 onAuthStateChanged 會自動觸發匿名登入
+        return true;
+    } catch (error) {
+        console.error("登出時發生錯誤:", error);
+        return false;
+    }
+};
+
+// 1. Email 註冊
+export const signUpWithEmail = async (email, password) => {
+    try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        // [FIXED] 註冊時不應立即登出或拋錯，需保留 session 讓 useLogin 執行 sendVerification
+        return userCredential.user;
+    } catch (error) {
+        // 可以把 Firebase 醜醜的錯誤代碼轉成中文
+        if (error.code === 'auth/email-already-in-use') throw new Error('此 Email 已被註冊');
+        if (error.code === 'auth/weak-password') throw new Error('密碼強度不足');
+        if (error.code === 'auth/invalid-email') throw new Error('Email 格式錯誤');
+        throw error;
+    }
+};
+
+// 2. Email 登入
+export const signInWithEmail = async (email, password) => {
+    try {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        if (!user.emailVerified) {
+            await auth.signOut(); // 強制登出，防止未驗證用戶進入系統
+        }
+
+        return user;
+    } catch (error) {
+        if (error.code === 'auth/user-not-found') throw new Error('找不到此帳號');
+        if (error.code === 'auth/wrong-password') throw new Error('密碼錯誤');
+        if (error.code === 'auth/invalid-credential') throw new Error('Email 或密碼錯誤');
+        throw error;
+    }
+};
+
+/**
+ * 訪客登入 (原本的邏輯)
+ */
+export const signInAsGuest = async () => {
+    try {
+        await signInAnonymously(auth);
+    } catch (error) {
+        console.error("Anonymous Auth Error:", error);
+        throw error;
+    }
+};
+
+// 綁定 (升級) 成 Google 帳號
+export const linkGoogleAccount = async () => {
+    const currentUser = auth.currentUser;
+
+    if (!currentUser) {
+        throw new Error("使用者未登入");
+    }
+
+    // 檢查是否已經連結 Google
+    const isAlreadyLinked = currentUser.providerData.some(p => p.providerId === 'google.com');
+    if (isAlreadyLinked) {
+        throw new Error("此帳號已連結 Google");
+    }
+
+    try {
+        await GoogleSignin.hasPlayServices();
+        const userInfo = await GoogleSignin.signIn();
+        const idToken = userInfo.data?.idToken;
+
+        if (!idToken) {
+            throw new Error('無法取得 Google Token');
+        }
+
+        const credential = GoogleAuthProvider.credential(idToken);
+
+        // 執行連結
+        await linkWithCredential(currentUser, credential);
+    } catch (error) {
+        console.error('linkGoogleAccount error:', error);
+        throw error;
+    }
+};
+
+// 解除連結 Google 帳號
+export const unlinkGoogleAccount = async () => {
+    const currentUser = auth.currentUser;
+    if (!currentUser) throw new Error("使用者未登入");
+
+    try {
+        await unlink(currentUser, 'google.com');
+        console.log("成功解除 Google 帳號連結");
+        return true;
+    } catch (error) {
+        console.error('unlinkGoogleAccount error:', error);
+        throw error;
+    }
+};
+
+// 3. 更新個人資料
+export const updateUserProfile = async (updates) => {
+    const user = auth.currentUser;
+    if (!user) throw new Error("No user logged in");
+
+    // updates 應為 { displayName, photoURL }
+    if (Object.keys(updates).length > 0) {
+        await updateProfile(user, updates);
+    }
+    return user;
+};
+
+// 4. 更新密碼
+export const updateUserPassword = async (password) => {
+    const user = auth.currentUser;
+    if (!user) throw new Error("No user logged in");
+    await updatePassword(user, password);
+};
+
+// 5. 刪除帳號
+export const deleteUserAccount = async () => {
+    const user = auth.currentUser;
+    if (!user) throw new Error("No user logged in");
+    await deleteUser(user);
+};
+
+// 6. 重新驗證 (用於敏感操作如修改密碼/刪除帳號)
+export const reauthenticateUser = async (password) => {
+    const user = auth.currentUser;
+    if (!user) throw new Error("使用者尚未登入");
+
+    // 這裡主要針對 Email 登入的使用者
+    const { EmailAuthProvider, reauthenticateWithCredential } = require('firebase/auth');
+    const credential = EmailAuthProvider.credential(user.email, password);
+
+    try {
+        await reauthenticateWithCredential(user, credential);
+        return true;
+    } catch (error) {
+        console.error("重新驗證失敗:", error);
+        if (error.code === 'auth/wrong-password') throw new Error('密碼錯誤');
+        throw error;
+    }
+};
+
+// 7. 發送驗證信
+export const sendVerification = async () => {
+    const user = auth.currentUser;
+    if (!user) throw new Error("使用者尚未登入");
+    await sendEmailVerification(user);
+};
+
+// 8. 發送重設密碼信
+export const sendResetPasswordEmail = async (email) => {
+    const { sendPasswordResetEmail } = require('firebase/auth');
+    try {
+        await sendPasswordResetEmail(auth, email);
+    } catch (error) {
+        if (error.code === 'auth/user-not-found') throw new Error('找不到此 Email 的帳號');
+        if (error.code === 'auth/invalid-email') throw new Error('Email 格式錯誤');
+        throw error;
+    }
+};

@@ -1,27 +1,31 @@
 {
   "expo": {
-    "name": "BattingRecord_Frontend",
+    "name": "BataLog",
     "slug": "BattingRecord_Frontend",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#000000"
     },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.stevenshih.batalog"
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#000000"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.stevenshih.BattingRecord_Frontend"
+      "package": "com.stevenshih.batalog"
     },
     "web": {
       "favicon": "./assets/favicon.png"

@@ -23,6 +23,8 @@ export const customTheme = {
     onPrimary: '#000000',          // 放在 Primary 按鈕上面的文字顏色 (對比色)
     
     // 【狀態】
+    success: '#00ffaeff',            // 成功
+    warning: '#fff04bff',            // 警告
     error: '#FF5252',              // 刪除按鈕、三振、警告
   },
 };

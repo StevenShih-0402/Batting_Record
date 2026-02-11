@@ -1,81 +1,133 @@
 // App.js
-import React from 'react';
-import { SafeAreaProvider, initialWindowMetrics, useSafeAreaInsets } from 'react-native-safe-area-context'; 
-import { Provider as PaperProvider } from 'react-native-paper'; 
+import React, { useMemo } from 'react';
+import { SafeAreaProvider, initialWindowMetrics } from 'react-native-safe-area-context';
+import { Provider as PaperProvider } from 'react-native-paper';
 import { NavigationContainer, DarkTheme as NavigationDarkTheme } from '@react-navigation/native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Feather as Icon } from '@expo/vector-icons';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import customTheme from './src/theme/PaperTheme';
 
-import StrikeZoneScreen from './src/screens/StrikeZoneScreen';
-import HistoryScreen from './src/screens/HistoryScreen'; 
-import customTheme from './src/theme/PaperTheme'; 
+import LoginScreen from './src/screens/LoginScreen';
+import { useAuth } from './src/hooks/auth/useAuth';
 
-const Tab = createBottomTabNavigator();
+import EditProfileScreen from './src/screens/EditProfileScreen';
+import BattingListScreen from './src/screens/BattingListScreen';
+import HistoryDetailScreen from './src/screens/HistoryDetailScreen';
+import PreferenceScreen from './src/screens/PreferenceScreen'; // Import PreferenceScreen
 
-// 讓 React Navigation 的底層顏色也遵循我們的深色主題
-const CombinedDarkTheme = {
-  ...NavigationDarkTheme,
-  colors: {
-    ...NavigationDarkTheme.colors,
-    background: customTheme.colors.background, // 確保底層是全黑
-    card: customTheme.colors.surface,
-  },
-};
+import MainTabs from './src/components/MainTabs';
+import { AlertProvider } from './src/context/AlertContext';
+import CustomAlertModal from './src/components/exception/CustomAlertModal';
+import { PreferencesProvider, usePreferences } from './src/context/PreferencesContext'; // Import Preferences Context
 
-const MainTabs = () => {
-    const insets = useSafeAreaInsets();
+const Stack = createNativeStackNavigator();
+
+// Inner component to consume usePreferences
+const MainContent = () => {
+    const { user, isReady } = useAuth();
+    const { primaryColor } = usePreferences();
+
+    // Create dynamic theme
+    const dynamicTheme = useMemo(() => ({
+        ...customTheme,
+        colors: {
+            ...customTheme.colors,
+            primary: primaryColor,
+        }
+    }), [primaryColor]);
+
+    // Create dynamic navigation theme
+    const dynamicNavigationTheme = useMemo(() => ({
+        ...NavigationDarkTheme,
+        colors: {
+            ...NavigationDarkTheme.colors,
+            background: dynamicTheme.colors.background,
+            card: dynamicTheme.colors.surface,
+            primary: primaryColor, // Update navigation primary color too
+        },
+    }), [dynamicTheme, primaryColor]);
+
+
+    if (!isReady) return null;
 
     return (
-        <Tab.Navigator
-            screenOptions={({ route }) => ({
-                tabBarIcon: ({ color, size }) => {
-                    let iconName = route.name === 'Record' ? 'edit-3' : 'list';
-                    return <Icon name={iconName} size={size} color={color} />;
-                },
-                tabBarActiveTintColor: customTheme.colors.primary,
-                tabBarInactiveTintColor: 'gray',
-                headerShown: false,
-                
-                // 【關鍵 1】移除 Screen 容器的預設樣式
-                sceneContainerStyle: { backgroundColor: customTheme.colors.background },
-                
-                tabBarStyle: {
-                    backgroundColor: customTheme.colors.surface,
-                    borderTopWidth: 0,
-                    elevation: 0,        // 移除陰影以減少與 Screen 之間的視覺斷層
-                    height: 70 + insets.bottom, 
-                    paddingBottom: insets.bottom > 0 ? insets.bottom : 10,
-                    paddingTop: 8,
-                },
-                tabBarLabelStyle: {
-                    fontSize: 12,
-                    fontWeight: '500',
-                }
-            })}
-        >
-            <Tab.Screen 
-                name="Record" 
-                component={StrikeZoneScreen} 
-                options={{ title: '數據輸入' }}
-            />
-            <Tab.Screen 
-                name="History" 
-                component={HistoryScreen} 
-                options={{ title: '紀錄查詢' }}
-            />
-        </Tab.Navigator>
+        <PaperProvider theme={dynamicTheme}>
+            <AlertProvider>
+                <NavigationContainer theme={dynamicNavigationTheme}>
+                    <Stack.Navigator screenOptions={{ headerShown: false }}>
+                        {user ? (
+                            <>
+                                <Stack.Screen name="MainTabs">
+                                    {(props) => <MainTabs {...props} user={user} />}
+                                </Stack.Screen>
+
+                                <Stack.Screen
+                                    name="Login"
+                                    component={LoginScreen}
+                                    options={{
+                                        presentation: 'modal',
+                                        headerShown: true,
+                                        title: '帳號綁定',
+                                        headerStyle: { backgroundColor: dynamicTheme.colors.surface },
+                                        headerTintColor: dynamicTheme.colors.onSurface,
+                                    }}
+                                />
+
+                                <Stack.Screen
+                                    name="EditProfile"
+                                    component={EditProfileScreen}
+                                    options={{ title: '編輯個人資料' }}
+                                />
+
+                                <Stack.Screen
+                                    name="Preference"
+                                    component={PreferenceScreen}
+                                    options={{
+                                        title: '偏好設定',
+                                        headerShown: true,
+                                        headerStyle: { backgroundColor: dynamicTheme.colors.surface },
+                                        headerTintColor: dynamicTheme.colors.onSurface,
+                                    }}
+                                />
+
+                                <Stack.Screen
+                                    name="BattingList"
+                                    component={BattingListScreen}
+                                    options={{
+                                        headerShown: true,
+                                        title: '打席紀錄',
+                                        headerStyle: { backgroundColor: dynamicTheme.colors.surface },
+                                        headerTintColor: dynamicTheme.colors.onSurface,
+                                    }}
+                                />
+
+                                <Stack.Screen
+                                    name="HistoryDetail"
+                                    component={HistoryDetailScreen}
+                                    options={{
+                                        headerShown: true,
+                                        title: '打席詳情',
+                                        headerStyle: { backgroundColor: dynamicTheme.colors.surface },
+                                        headerTintColor: dynamicTheme.colors.onSurface,
+                                    }}
+                                />
+                            </>
+                        ) : (
+                            <Stack.Screen name="Login" component={LoginScreen} />
+                        )}
+                    </Stack.Navigator>
+                </NavigationContainer>
+                <CustomAlertModal />
+            </AlertProvider>
+        </PaperProvider>
     );
 };
 
 const App = () => {
     return (
-        <SafeAreaProvider initialMetrics={initialWindowMetrics}>            
-            <PaperProvider theme={customTheme}>
-                {/* 【關鍵 2】將合併後的主題傳給 NavigationContainer */}
-                <NavigationContainer theme={CombinedDarkTheme}>
-                    <MainTabs />
-                </NavigationContainer>
-            </PaperProvider>
+        <SafeAreaProvider initialMetrics={initialWindowMetrics}>
+            <PreferencesProvider>
+                <MainContent />
+            </PreferencesProvider>
         </SafeAreaProvider>
     );
 };

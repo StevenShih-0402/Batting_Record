@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "182365585056",
+    "project_id": "baseball-strikezone-2f68c",
+    "storage_bucket": "baseball-strikezone-2f68c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:182365585056:android:bb52ef496079f4ec4f93c5",
+        "android_client_info": {
+          "package_name": "com.stevenshih.batalog"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "182365585056-8arj3g0imf5h25usnol1kfbg0t9mog57.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBQL34GDWfDmESquw-SNpzB_BGxzrOuAYk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "182365585056-8arj3g0imf5h25usnol1kfbg0t9mog57.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
