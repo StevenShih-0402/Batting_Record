@@ -1,11 +1,13 @@
 // src/screens/PreferenceScreen.js
-// 偏好設定頁面：自訂主題色、球種與結果
+// 偏好設定頁面：自訂主題色、球種、自訂打席備註欄位與自訂打席彙整欄位
 import React, { useState } from 'react';
 import { View, ScrollView, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
-import { Text, TextInput, Button, useTheme, Chip, Divider, IconButton, ActivityIndicator } from 'react-native-paper';
+import { Text, TextInput, Button, useTheme, Chip, Divider, IconButton, ActivityIndicator, SegmentedButtons } from 'react-native-paper';
 import { usePreferences } from '../context/PreferencesContext';
+import { useFieldEditor } from '../hooks/ui/useFieldEditor';
 import { useNavigation } from '@react-navigation/native';
 import { useAlert } from '../context/AlertContext';
+import { v4 as uuidv4 } from 'uuid';
 
 // 預設提供的主題色選項
 const THEME_COLORS = [
@@ -28,24 +30,30 @@ const PreferenceScreen = () => {
     const navigation = useNavigation();
     const { showSuccess, showError } = useAlert();
     const {
-        pitchTypes, pitchResults, primaryColor,
+        pitchTypes, primaryColor,
+        customPitchFields, customSummaryFields,
         savePreferences, isLoading
     } = usePreferences();
 
     // 本地狀態管理，直到按下儲存
     const [localPitchTypes, setLocalPitchTypes] = useState([...pitchTypes]);
-    const [localPitchResults, setLocalPitchResults] = useState([...pitchResults]);
     const [localColor, setLocalColor] = useState(primaryColor);
+    const [localPitchFields, setLocalPitchFields] = useState([...customPitchFields]);
+    const [localSummaryFields, setLocalSummaryFields] = useState([...customSummaryFields]);
 
     const [newPitchType, setNewPitchType] = useState('');
-    const [newPitchResult, setNewPitchResult] = useState('');
     const [isSaving, setIsSaving] = useState(false);
+
+    // 自訂打席備註欄位編輯器
+    const pitchEditor = useFieldEditor();
+    // 自訂打席彙整欄位編輯器
+    const summaryEditor = useFieldEditor();
 
     // 處理球種更新
     const addPitchType = () => {
         if (!newPitchType.trim()) return;
         if (localPitchTypes.includes(newPitchType.trim())) {
-            showError("重複項目", "此球種已存在");
+            showError('重複項目', '此球種已存在');
             return;
         }
         setLocalPitchTypes([...localPitchTypes, newPitchType.trim()]);
@@ -58,37 +66,51 @@ const PreferenceScreen = () => {
         setLocalPitchTypes(newList);
     };
 
-    // 處理結果更新
-    const addPitchResult = () => {
-        if (!newPitchResult.trim()) return;
-        if (localPitchResults.includes(newPitchResult.trim())) {
-            showError("重複項目", "此結果已存在");
+    /**
+     * 將編輯器的欄位定義加入指定的欄位清單。
+     */
+    const addCustomField = (editor, setList) => {
+        if (!editor.label.trim()) {
+            showError('欄位名稱不得為空', '請輸入欄位名稱');
             return;
         }
-        setLocalPitchResults([...localPitchResults, newPitchResult.trim()]);
-        setNewPitchResult('');
+        if (editor.type === 'dropdown' && editor.options.length === 0) {
+            showError('請新增選項', '下拉選單型欄位至少需要一個選項');
+            return;
+        }
+        const newField = {
+            id: uuidv4(),
+            label: editor.label.trim(),
+            type: editor.type,
+            options: editor.type === 'dropdown' ? [...editor.options] : [],
+        };
+        setList((prev) => [...prev, newField]);
+        editor.reset();
     };
 
-    const removePitchResult = (index) => {
-        const newList = [...localPitchResults];
-        newList.splice(index, 1);
-        setLocalPitchResults(newList);
+    const removeCustomField = (setList, id) => {
+        setList((prev) => prev.filter((f) => f.id !== id));
     };
 
     // 儲存所有變更
     const handleSave = async () => {
         setIsSaving(true);
         try {
-            const success = await savePreferences(localPitchTypes, localPitchResults, localColor);
+            const success = await savePreferences(
+                localPitchTypes,
+                localColor,
+                localPitchFields,
+                localSummaryFields
+            );
             if (success) {
-                showSuccess("儲存成功", "偏好設定已更新");
+                showSuccess('儲存成功', '偏好設定已更新');
                 navigation.goBack();
             } else {
-                showError("儲存失敗", "請稍後再試");
+                showError('儲存失敗', '請稍後再試');
             }
         } catch (error) {
             console.error(error);
-            showError("發生錯誤", error.message);
+            showError('發生錯誤', error.message);
         } finally {
             setIsSaving(false);
         }
@@ -101,6 +123,94 @@ const PreferenceScreen = () => {
             </View>
         );
     }
+
+    /**
+     * 渲染自訂欄位的新增表單（共用於備註欄位與彙整欄位）。
+     */
+    const renderFieldEditor = (editor, list, setList) => (
+        <View>
+            {/* 欄位名稱 */}
+            <View style={styles.inputRow}>
+                <TextInput
+                    mode="outlined"
+                    label="欄位名稱"
+                    value={editor.label}
+                    onChangeText={editor.setLabel}
+                    style={{ flex: 1, backgroundColor: theme.colors.surface }}
+                    dense
+                />
+            </View>
+
+            {/* 欄位類型 */}
+            <SegmentedButtons
+                value={editor.type}
+                onValueChange={editor.setType}
+                buttons={[
+                    { value: 'text', label: '文字輸入' },
+                    { value: 'dropdown', label: '下拉選單' },
+                ]}
+                style={{ marginBottom: 10 }}
+            />
+
+            {/* 下拉選項管理 */}
+            {editor.type === 'dropdown' && (
+                <View>
+                    <View style={styles.inputRow}>
+                        <TextInput
+                            mode="outlined"
+                            label="新增選項"
+                            value={editor.newOption}
+                            onChangeText={editor.setNewOption}
+                            style={{ flex: 1, backgroundColor: theme.colors.surface }}
+                            dense
+                        />
+                        <IconButton
+                            icon="plus"
+                            mode="contained"
+                            containerColor={theme.colors.secondary}
+                            iconColor={theme.colors.onSecondary}
+                            onPress={editor.addOption}
+                        />
+                    </View>
+                    <View style={styles.chipRow}>
+                        {editor.options.map((opt, idx) => (
+                            <Chip
+                                key={idx}
+                                onClose={() => editor.removeOption(idx)}
+                                style={styles.chip}
+                            >
+                                {opt}
+                            </Chip>
+                        ))}
+                    </View>
+                </View>
+            )}
+
+            {/* 新增按鈕 */}
+            <Button
+                mode="outlined"
+                icon="plus"
+                onPress={() => addCustomField(editor, setList)}
+                style={{ marginBottom: 14 }}
+            >
+                新增此欄位
+            </Button>
+
+            {/* 已新增的欄位列表 */}
+            <View style={styles.chipRow}>
+                {list.map((field) => (
+                    <Chip
+                        key={field.id}
+                        onClose={() => removeCustomField(setList, field.id)}
+                        style={styles.chip}
+                        icon={field.type === 'dropdown' ? 'chevron-down' : 'text'}
+                    >
+                        {field.label}
+                    </Chip>
+                ))}
+            </View>
+        </View>
+    );
 
     return (
         <KeyboardAvoidingView
@@ -170,39 +280,28 @@ const PreferenceScreen = () => {
 
                     <Divider style={styles.divider} />
 
-                    {/* 3. 自訂結果 */}
+                    {/* 3. 自訂打席備註欄位 */}
                     <View style={styles.section}>
-                        <Text variant="titleMedium" style={{ color: theme.colors.primary, marginBottom: 10 }}>
-                            自訂投球結果
+                        <Text variant="titleMedium" style={{ color: theme.colors.primary, marginBottom: 4 }}>
+                            自訂打席備註欄位
                         </Text>
-                        <View style={styles.inputRow}>
-                            <TextInput
-                                mode="outlined"
-                                label="新增結果 (例如: 觸身球)"
-                                value={newPitchResult}
-                                onChangeText={setNewPitchResult}
-                                style={{ flex: 1, backgroundColor: theme.colors.surface }}
-                                dense
-                            />
-                            <IconButton
-                                icon="plus"
-                                mode="contained"
-                                containerColor={theme.colors.primary}
-                                iconColor={theme.colors.onPrimary}
-                                onPress={addPitchResult}
-                            />
-                        </View>
-                        <View style={styles.chipRow}>
-                            {localPitchResults.map((result, index) => (
-                                <Chip
-                                    key={index}
-                                    onClose={() => removePitchResult(index)}
-                                    style={styles.chip}
-                                >
-                                    {result}
-                                </Chip>
-                            ))}
-                        </View>
+                        <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginBottom: 12 }}>
+                            出現在每球的輸入 Modal，顯示於打席詳情的「球種(位置)」下方
+                        </Text>
+                        {renderFieldEditor(pitchEditor, localPitchFields, setLocalPitchFields)}
+                    </View>
+
+                    <Divider style={styles.divider} />
+
+                    {/* 4. 自訂打席彙整欄位 */}
+                    <View style={styles.section}>
+                        <Text variant="titleMedium" style={{ color: theme.colors.primary, marginBottom: 4 }}>
+                            自訂打席彙整欄位
+                        </Text>
+                        <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginBottom: 12 }}>
+                            出現在結束打席 Modal，顯示於歷史紀錄的「日期｜球數」下方
+                        </Text>
+                        {renderFieldEditor(summaryEditor, localSummaryFields, setLocalSummaryFields)}
                     </View>
 
                     <View style={styles.footer}>
@@ -211,7 +310,7 @@ const PreferenceScreen = () => {
                             onPress={handleSave}
                             loading={isSaving}
                             disabled={isSaving}
-                            style={{ backgroundColor: localColor }} // 使用預覽顏色
+                            style={{ backgroundColor: localColor }}
                         >
                             儲存變更
                         </Button>
@@ -253,6 +352,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         flexWrap: 'wrap',
         gap: 8,
+        marginBottom: 10,
     },
     chip: {
         marginBottom: 4,

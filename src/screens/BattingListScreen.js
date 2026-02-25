@@ -14,6 +14,7 @@ import EndAtBatModal from '../components/modals/EndAtBatModal';
 
 // 導入 Hook
 import useAtBatRecords from '../hooks/useAtBatRecords';
+import { usePreferences } from '../context/PreferencesContext';
 
 /**
  * 打席逐球紀錄的 Screen，顯示當前打席的所有投球紀錄。
@@ -21,6 +22,7 @@ import useAtBatRecords from '../hooks/useAtBatRecords';
  */
 const BattingListScreen = ({ navigation }) => {
     const theme = useTheme();
+    const { customPitchFields } = usePreferences();
 
     // 使用 Hook 獲取資料與操作方法
     const {
@@ -160,6 +162,12 @@ const BattingListScreen = ({ navigation }) => {
                                         {record.pitchType}
                                         {record.speed && record.speed > 0 ? `\n${record.speed.toFixed(1)} km/h` : ''}
                                         {record.note ? `\n備註: ${record.note}` : ''}
+                                        {customPitchFields
+                                            .map((f) => {
+                                                const val = record.customPitchValues?.[f.id];
+                                                return val ? `\n${f.label}: ${val}` : '';
+                                            })
+                                            .join('')}
                                     </Text>
                                 </View>
 

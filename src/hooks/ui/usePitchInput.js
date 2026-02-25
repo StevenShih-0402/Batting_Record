@@ -3,37 +3,50 @@
 import { useState, useEffect } from 'react';
 import { useAlert } from '../../context/AlertContext';
 import { usePreferences } from '../../context/PreferencesContext';
+import { PITCH_RESULTS } from '../../constants/GameConstants';
 
 export const usePitchInput = (isVisible, cellInfo, atBatStatus, onSave) => {
-    const { pitchTypes, pitchResults } = usePreferences();
+    const { pitchTypes, customPitchFields } = usePreferences();
+    const { showWarning } = useAlert();
 
     // 初始化狀態
     const [pitchType, setPitchType] = useState(pitchTypes[0]);
-    const [result, setResult] = useState(pitchResults[0]);
+    const [result, setResult] = useState(PITCH_RESULTS[0]);
     const [speed, setSpeed] = useState('');
     const [note, setNote] = useState('');
+
+    /**
+     * 自訂打席備註欄位的輸入值，key 為 fieldId。
+     */
+    const [customValues, setCustomValues] = useState({});
 
     // 當 context 載入完成或 isVisible 變更時，重置/更新預設值
     useEffect(() => {
         if (!isVisible) {
             setPitchType(pitchTypes[0]);
-            setResult(pitchResults[0]);
+            setResult(PITCH_RESULTS[0]);
             setSpeed('');
             setNote('');
+            setCustomValues({});
         }
-    }, [isVisible, pitchTypes, pitchResults]);
+    }, [isVisible, pitchTypes]);
+
+    /**
+     * 設定單一自訂欄位的值。
+     */
+    const setCustomValue = (fieldId, value) => {
+        setCustomValues((prev) => ({ ...prev, [fieldId]: value }));
+    };
 
     // 業務邏輯：過濾可選結果
     const getResultOptions = () => {
-        // 使用 context 中的 pitchResults
-        let options = [...pitchResults];
+        let options = [...PITCH_RESULTS];
 
-        // 根據好壞球數過濾
         if (atBatStatus.strikes >= 3) {
-            options = options.filter(r => r !== '好球');
+            options = options.filter((r) => r !== '好球');
         }
         if (atBatStatus.balls >= 4) {
-            options = options.filter(r => r !== '壞球');
+            options = options.filter((r) => r !== '壞球');
         }
         return options;
     };
@@ -41,17 +54,17 @@ export const usePitchInput = (isVisible, cellInfo, atBatStatus, onSave) => {
     const handleSave = async () => {
         // 1. 判定打席是否已結束
         if (atBatStatus.isFinished) {
-            showWarning("打席已結束", `請先儲存紀錄後再開始新的。`);
+            showWarning('打席已結束', '請先儲存紀錄後再開始新的。');
             return;
         }
 
         // 2. 判定邏輯衝突
         if (result === '好球' && atBatStatus.strikes >= 3) {
-            showWarning("無法儲存", "好球數已滿。");
+            showWarning('無法儲存', '好球數已滿。');
             return;
         }
         if (result === '壞球' && atBatStatus.balls >= 4) {
-            showWarning("無法儲存", "壞球數已滿。");
+            showWarning('無法儲存', '壞球數已滿。');
             return;
         }
 
@@ -62,9 +75,10 @@ export const usePitchInput = (isVisible, cellInfo, atBatStatus, onSave) => {
             result,
             speed: finalSpeed,
             cellNumber: cellInfo.cellNumber,
-            gridX: cellInfo.gridX, // 確保這兩行存在
+            gridX: cellInfo.gridX,
             gridY: cellInfo.gridY,
             note,
+            customPitchValues: customValues,
         };
 
         await onSave(data);
@@ -73,9 +87,11 @@ export const usePitchInput = (isVisible, cellInfo, atBatStatus, onSave) => {
     return {
         form: { pitchType, result, speed, note },
         setPitchType, setResult, setSpeed, setNote,
+        customPitchFields,
+        customValues,
+        setCustomValue,
         getResultOptions,
         handleSave,
-        pitchTypes, // 回傳給 UI 使用
-        pitchResults
+        pitchTypes,
     };
 };

@@ -1,10 +1,10 @@
 // src/context/PreferencesContext.js
-// 管理使用者偏好設定 (球種、結果、主題色)
+// 管理使用者偏好設定 (球種、自訂欄位、主題色)
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from '../hooks/auth/useAuth';
 import { db } from '../services/firebaseService';
-import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
-import { PITCH_TYPES_ZH, PITCH_RESULTS } from '../constants/GameConstants';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { PITCH_TYPES_ZH } from '../constants/GameConstants';
 import customTheme from '../theme/PaperTheme';
 
 const PreferencesContext = createContext();
@@ -14,9 +14,20 @@ export const PreferencesProvider = ({ children }) => {
 
     // 預設值
     const [pitchTypes, setPitchTypes] = useState(PITCH_TYPES_ZH);
-    const [pitchResults, setPitchResults] = useState(PITCH_RESULTS);
     const [primaryColor, setPrimaryColor] = useState(customTheme.colors.primary);
     const [isLoading, setIsLoading] = useState(true);
+
+    /**
+     * 自訂打席備註欄位 (顯示在 PitchInputModal，儲存於每顆球的紀錄)
+     * schema: { id: string, label: string, type: 'text'|'dropdown', options: string[] }
+     */
+    const [customPitchFields, setCustomPitchFields] = useState([]);
+
+    /**
+     * 自訂打席彙整欄位 (顯示在 EndAtBatModal，儲存於打席彙整)
+     * schema: { id: string, label: string, type: 'text'|'dropdown', options: string[] }
+     */
+    const [customSummaryFields, setCustomSummaryFields] = useState([]);
 
     // 載入使用者偏好
     useEffect(() => {
@@ -31,17 +42,19 @@ export const PreferencesProvider = ({ children }) => {
                         const prefs = data.preferences || {};
 
                         if (prefs.pitchTypes) setPitchTypes(prefs.pitchTypes);
-                        if (prefs.pitchResults) setPitchResults(prefs.pitchResults);
                         if (prefs.primaryColor) setPrimaryColor(prefs.primaryColor);
+                        if (prefs.customPitchFields) setCustomPitchFields(prefs.customPitchFields);
+                        if (prefs.customSummaryFields) setCustomSummaryFields(prefs.customSummaryFields);
                     }
                 } catch (error) {
-                    console.error("無法載入使用者偏好設定:", error);
+                    console.error('無法載入使用者偏好設定:', error);
                 }
             } else {
                 // 訪客或未登入使用預設值
                 setPitchTypes(PITCH_TYPES_ZH);
-                setPitchResults(PITCH_RESULTS);
                 setPrimaryColor(customTheme.colors.primary);
+                setCustomPitchFields([]);
+                setCustomSummaryFields([]);
             }
             setIsLoading(false);
         };
@@ -49,25 +62,39 @@ export const PreferencesProvider = ({ children }) => {
         loadPreferences();
     }, [user]);
 
-    // 儲存偏好設定
-    const savePreferences = async (newPitchTypes, newPitchResults, newPrimaryColor) => {
+    /**
+     * 儲存偏好設定到 Firestore。
+     * pitchResults 已移除，改使用固定常數 PITCH_RESULTS。
+     */
+    const savePreferences = async (
+        newPitchTypes,
+        newPrimaryColor,
+        newCustomPitchFields,
+        newCustomSummaryFields
+    ) => {
         setPitchTypes(newPitchTypes);
-        setPitchResults(newPitchResults);
         setPrimaryColor(newPrimaryColor);
+        setCustomPitchFields(newCustomPitchFields);
+        setCustomSummaryFields(newCustomSummaryFields);
 
         if (user && !user.isAnonymous) {
             try {
                 const userRef = doc(db, 'users', user.uid);
-                await setDoc(userRef, {
-                    preferences: {
-                        pitchTypes: newPitchTypes,
-                        pitchResults: newPitchResults,
-                        primaryColor: newPrimaryColor
-                    }
-                }, { merge: true });
+                await setDoc(
+                    userRef,
+                    {
+                        preferences: {
+                            pitchTypes: newPitchTypes,
+                            primaryColor: newPrimaryColor,
+                            customPitchFields: newCustomPitchFields,
+                            customSummaryFields: newCustomSummaryFields,
+                        },
+                    },
+                    { merge: true }
+                );
                 return true;
             } catch (error) {
-                console.error("無法儲存使用者偏好設定:", error);
+                console.error('無法儲存使用者偏好設定:', error);
                 return false;
             }
         }
@@ -75,13 +102,16 @@ export const PreferencesProvider = ({ children }) => {
     };
 
     return (
-        <PreferencesContext.Provider value={{
-            pitchTypes,
-            pitchResults,
-            primaryColor,
-            savePreferences,
-            isLoading
-        }}>
+        <PreferencesContext.Provider
+            value={{
+                pitchTypes,
+                primaryColor,
+                customPitchFields,
+                customSummaryFields,
+                savePreferences,
+                isLoading,
+            }}
+        >
             {children}
         </PreferencesContext.Provider>
     );

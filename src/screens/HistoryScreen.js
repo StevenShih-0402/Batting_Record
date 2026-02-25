@@ -13,6 +13,7 @@ import { deleteAtBatSummary, updateAtBatSummaryPitches } from '../services/atBat
 // 導入 Hook
 import { useHistoryData } from '../hooks/api/useHistoryData';
 import { useAuth } from '../hooks/auth/useAuth';
+import { usePreferences } from '../context/PreferencesContext';
 
 /**
  * 歷史紀錄頁面，顯示已彙整的打席列表。
@@ -22,6 +23,7 @@ const HistoryScreen = ({ navigation }) => {
     const theme = useTheme();
     const { history, loading } = useHistoryData();
     const { user } = useAuth();
+    const { customSummaryFields } = usePreferences();
 
     // 點擊卡片，導航到詳情頁
     const handleCardPress = (item) => {
@@ -47,6 +49,20 @@ const HistoryScreen = ({ navigation }) => {
         );
     }
 
+    /**
+     * 將自訂彙整欄位值組合成顯示用字串，換行分隔。
+     */
+    const buildCustomSummaryText = (summaryValues) => {
+        if (!summaryValues || customSummaryFields.length === 0) return '';
+        return customSummaryFields
+            .map((field) => {
+                const val = summaryValues[field.id];
+                return val ? `${field.label}: ${val}` : null;
+            })
+            .filter(Boolean)
+            .join('\n');
+    };
+
     return (
         <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.background }]}>
             <View style={[styles.headerContainer, { backgroundColor: theme.colors.surface }]}>
@@ -64,25 +80,36 @@ const HistoryScreen = ({ navigation }) => {
                         尚無歷史紀錄{user?.isAnonymous ? '\n(登入查看彙整的打席紀錄)' : ''}
                     </Text>
                 }
-                renderItem={({ item }) => (
-                    <Card
-                        style={[styles.card, { backgroundColor: theme.colors.surfaceVariant }]}
-                        onPress={() => handleCardPress(item)}    // 觸發 HistoryDataModal 的點擊事件
-                    >
-                        <List.Item
-                            title={item.atBatLabel || `打席結果：${item.finalOutcome}`}
-                            titleStyle={{
-                                color: theme.colors.primary,
-                                fontWeight: 'bold',
-                                fontSize: 16
-                            }}
-                            description={`${item.date} | ${item.totalPitches} 球 \n${item.summaryNote}`}
-                            descriptionStyle={{ color: theme.colors.onSurfaceVariant }}
-                            left={props => <List.Icon {...props} icon="calendar-check" color={theme.colors.primary} />}
-                            right={props => <Icon name="chevron-right" size={20} color={theme.colors.onSurfaceVariant} style={{ alignSelf: 'center' }} />}
-                        />
-                    </Card>
-                )}
+                renderItem={({ item }) => {
+                    const customText = buildCustomSummaryText(item.customSummaryValues);
+                    const description = [
+                        `日期：${item.date}`,
+                        `球數：${item.totalPitches} 球`,
+                        ...(item.summaryNote ? [`備註：${item.summaryNote}`] : []),
+                        ...(customText ? [customText] : []),
+                    ].join('\n');
+
+                    return (
+                        <Card
+                            style={[styles.card, { backgroundColor: theme.colors.surfaceVariant }]}
+                            onPress={() => handleCardPress(item)}
+                        >
+                            <List.Item
+                                title={item.atBatLabel || `打席結果：${item.finalOutcome}`}
+                                titleStyle={{
+                                    color: theme.colors.primary,
+                                    fontWeight: 'bold',
+                                    fontSize: 16
+                                }}
+                                description={description}
+                                descriptionStyle={{ color: theme.colors.onSurfaceVariant }}
+                                descriptionNumberOfLines={10}
+                                left={props => <List.Icon {...props} icon="calendar-check" color={theme.colors.primary} />}
+                                right={props => <Icon name="chevron-right" size={20} color={theme.colors.onSurfaceVariant} style={{ alignSelf: 'center' }} />}
+                            />
+                        </Card>
+                    );
+                }}
             />
         </SafeAreaView>
     );

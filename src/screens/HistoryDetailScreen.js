@@ -6,8 +6,9 @@ import { View, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text, Button, IconButton, useTheme, Divider, Surface } from 'react-native-paper';
 import { useAlert } from '../context/AlertContext';
+import { usePreferences } from '../context/PreferencesContext';
 import { getColorByResult } from '../constants/Colors';
-import { deleteAtBatSummary, updateAtBatSummaryPitches } from '../services/atBatSummaryService'; // Added import
+import { deleteAtBatSummary, updateAtBatSummaryPitches } from '../services/atBatSummaryService';
 
 // 使用與 StrikeZoneScreen 相同的九宮格組件
 import PitchGrid from '../components/common/PitchGrid';
@@ -22,8 +23,9 @@ import PitchEditModal from '../components/modals/PitchEditModal';
  */
 const HistoryDetailScreen = ({ navigation, route }) => {
     const theme = useTheme();
-    const { record } = route.params || {}; // Removed callbacks
+    const { record } = route.params || {};
     const { showWarning } = useAlert();
+    const { customPitchFields } = usePreferences();
     const [localPitches, setLocalPitches] = useState([]);
     const [gridLayout, setGridLayout] = useState(null);
 
@@ -56,11 +58,10 @@ const HistoryDetailScreen = ({ navigation, route }) => {
 
     // 處理單顆球的刪除
     const handleDeleteSinglePitch = (index) => {
-        showWarning("刪除球點", "確定要刪除這顆球嗎？", [
-            { text: "取消", style: "cancel" },
+        showWarning('刪除球點', '確定要刪除這顆球嗎？', [
+            { text: '取消', style: 'cancel' },
             {
-                text: "刪除",
-                // style: "destructive", // CustomAlertModal 對應 style
+                text: '刪除',
                 onPress: async () => {
                     const newPitches = [...localPitches];
                     newPitches.splice(index, 1);
@@ -73,11 +74,10 @@ const HistoryDetailScreen = ({ navigation, route }) => {
 
     // 處理整筆紀錄刪除
     const handleDeleteWholeRecord = () => {
-        showWarning("刪除整筆紀錄", "確定要刪除這個打席的所有資料嗎？", [
-            { text: "取消", style: "cancel" },
+        showWarning('刪除整筆紀錄', '確定要刪除這個打席的所有資料嗎？', [
+            { text: '取消', style: 'cancel' },
             {
-                text: "確認刪除",
-                // style: "destructive", // CustomAlertModal 對應 style
+                text: '確認刪除',
                 onPress: async () => {
                     await deleteAtBatSummary(record.id);
                     navigation.goBack();
@@ -111,7 +111,6 @@ const HistoryDetailScreen = ({ navigation, route }) => {
                 ...updatedData,
             };
             setLocalPitches(newPitches);
-
             await updateAtBatSummaryPitches(record.id, newPitches);
             handleEditModalClose();
         } finally {
@@ -129,10 +128,13 @@ const HistoryDetailScreen = ({ navigation, route }) => {
         handleDeleteSinglePitch(indexToDelete);
     };
 
-    // 渲染投球列表的每一列
+    /**
+     * 渲染投球列表的每一列，在球種(位置)下方顯示自訂打席備註欄位值。
+     */
     const renderPitchRow = (pitch, index) => {
         const pitchNumber = localPitches.length - index;
         const color = getColorByResult(pitch.result);
+        const pitchCustomValues = pitch.customPitchValues || {};
 
         return (
             <TouchableOpacity
@@ -163,8 +165,23 @@ const HistoryDetailScreen = ({ navigation, route }) => {
                                     {pitch.speed ? `${pitch.speed} km/h` : '--'}
                                 </Text>
                                 <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginRight: 12 }}>
-                                    {pitch.pitchType || '未紀錄'} ({pitch.cellNumber == 0 ? `九宮格外` : `${pitch.cellNumber} 號位`})
+                                    {pitch.pitchType || '未紀錄'} ({pitch.cellNumber == 0 ? '九宮格外' : `${pitch.cellNumber} 號位`})
                                 </Text>
+
+                                {/* 自訂打席備註欄位值 */}
+                                {customPitchFields.map((field) => {
+                                    const val = pitchCustomValues[field.id];
+                                    if (!val) return null;
+                                    return (
+                                        <Text
+                                            key={field.id}
+                                            variant="bodySmall"
+                                            style={{ color: theme.colors.onSurfaceVariant }}
+                                        >
+                                            {field.label}: {val}
+                                        </Text>
+                                    );
+                                })}
                             </View>
                         </View>
 

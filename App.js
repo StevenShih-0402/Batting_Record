@@ -1,4 +1,5 @@
 // App.js
+import 'react-native-get-random-values'; // uuid polyfill — must be first
 import React, { useMemo } from 'react';
 import { SafeAreaProvider, initialWindowMetrics } from 'react-native-safe-area-context';
 import { Provider as PaperProvider } from 'react-native-paper';

@@ -21,12 +21,10 @@ const useAtBatRecords = () => {
 
     // 4. 在這裡加工要儲存的資料
     const handleSaveSummaryAction = async (uiData) => {
-        // uiData 現在從 useEndAtBat 傳過來，會是 { atBatTitle: "...", summaryNote: "..." }
-        const { atBatTitle, summaryNote } = uiData;
+        // uiData 從 useEndAtBat 傳來：{ atBatTitle, summaryNote, customSummaryValues }
+        const { atBatTitle, summaryNote, customSummaryValues = {} } = uiData;
 
-        // ✅ 修正點：將標題傳入 formatAtBatData
-        // 依照我們先前修改的 formatAtBatData(title, note, records)
-        const finalPayload = formatAtBatData(atBatTitle, summaryNote, atBatRecords);
+        const finalPayload = formatAtBatData(atBatTitle, summaryNote, atBatRecords, customSummaryValues);
 
         // 呼叫 API 層 (usePitchData) 存入彙整資料
         return await baseSaveSummary(finalPayload);
@@ -40,7 +38,7 @@ const useAtBatRecords = () => {
         handleSavePitch,
         handleDeletePitch,
         handleUpdatePitch,
-        handleSaveSummary: handleSaveSummaryAction, // UI 層會拿到這個加工過的版本
+        handleSaveSummary: handleSaveSummaryAction,
         userReady: authReady,
     };
 };

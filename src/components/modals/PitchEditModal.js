@@ -1,11 +1,11 @@
 // src/components/modals/PitchEditModal.js
-// 編輯與刪除逐球紀錄的彈窗
+// 編輯與刪除逐球紀錄的彈窗，支援自訂打席備註欄位的編輯
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
-import { Modal, Portal, Text, Button, useTheme, IconButton } from 'react-native-paper';
+import { Modal, Portal, Text, Button, useTheme, IconButton, TextInput, Chip } from 'react-native-paper';
 import { getColorByResult } from '../../constants/Colors';
-import { usePreferences } from '../../context/PreferencesContext'; // 引入 context
+import { usePreferences } from '../../context/PreferencesContext';
 
 // 匯入表單元件
 import SelectionDropdown from '../forms/SelectionDropdown';
@@ -17,15 +17,47 @@ import { usePitchEdit } from '../../hooks/ui/usePitchEdit';
 
 const PitchEditModal = ({ isVisible, record, onClose, onSave, onDelete, isSaving }) => {
     const theme = useTheme();
-    const { pitchTypes } = usePreferences(); // 取得動態球種列表
+    const { pitchTypes, customPitchFields } = usePreferences();
 
-    // 使用自定義 Hook
-    const { formState, setSpeed, setPitchType, setNote, handleSave } =
+    const { formState, setSpeed, setPitchType, setNote, handleSave, customPitchValues, setCustomValue } =
         usePitchEdit(record, isVisible, onSave);
 
     if (!record) return null;
 
     const dotColor = getColorByResult(record.result, record.atBatEndOutcome);
+
+    /**
+     * 渲染單一自訂打席備註欄位（顯示現有值供編輯）。
+     */
+    const renderCustomField = (field) => {
+        const value = customPitchValues[field.id] || '';
+
+        if (field.type === 'dropdown') {
+            return (
+                <View key={field.id} style={styles.customFieldWrapper}>
+                    <SelectionDropdown
+                        label={field.label}
+                        selectedValue={value}
+                        options={field.options || []}
+                        onSelect={(v) => setCustomValue(field.id, v)}
+                    />
+                </View>
+            );
+        }
+
+        return (
+            <View key={field.id} style={styles.customFieldWrapper}>
+                <TextInput
+                    mode="outlined"
+                    label={field.label}
+                    value={value}
+                    onChangeText={(v) => setCustomValue(field.id, v)}
+                    style={{ backgroundColor: theme.colors.surface }}
+                    dense
+                />
+            </View>
+        );
+    };
 
     return (
         <Portal>
@@ -44,36 +76,38 @@ const PitchEditModal = ({ isVisible, record, onClose, onSave, onDelete, isSaving
                 </View>
 
                 <ScrollView style={styles.content}>
-                    {/* 1. 頂部資訊卡 (保持不變) */}
+                    {/* 1. 頂部資訊卡 */}
                     <View style={styles.infoSection}>
                         <Text variant="labelLarge" style={{ color: dotColor }}>當前結果：{record.result}</Text>
                         <Text variant="bodySmall">位置：{record.cellNumber > 0 ? `${record.cellNumber} 號位` : '九宮格外'}</Text>
                     </View>
 
-                    {/* 2. 球種表單選單 (Inline) */}
+                    {/* 2. 球種 */}
                     <SelectionDropdown
                         label="球種"
                         selectedValue={formState.pitchType}
-                        options={pitchTypes} // 使用動態列表
+                        options={pitchTypes}
                         onSelect={setPitchType}
                     />
 
-                    {/* 3. 球速輸入 (數值輸入優化) */}
+                    {/* 3. 球速 */}
                     <SpeedInput
                         value={formState.speed}
                         onChangeText={setSpeed}
                     />
 
-                    {/* 4. 備註輸入 */}
+                    {/* 4. 備註 */}
                     <NoteInput
                         value={formState.note}
                         onChangeText={setNote}
                     />
+
+                    {/* 5. 自訂打席備註欄位 */}
+                    {customPitchFields.map((field) => renderCustomField(field))}
                 </ScrollView>
 
                 {/* 按鈕區域 */}
                 <View style={styles.footer}>
-                    {/* 左側：刪除按鈕 (危險操作) */}
                     <Button
                         mode="text"
                         onPress={() => onDelete(record.id)}
@@ -83,7 +117,6 @@ const PitchEditModal = ({ isVisible, record, onClose, onSave, onDelete, isSaving
                         刪除
                     </Button>
 
-                    {/* 右側：儲存 */}
                     <Button
                         mode="contained"
                         onPress={handleSave}
@@ -102,8 +135,8 @@ const PitchEditModal = ({ isVisible, record, onClose, onSave, onDelete, isSaving
 const styles = StyleSheet.create({
     modalContainer: {
         margin: 20,
-        padding: 0, // 內部自行配制 padding
-        borderRadius: 28, // MD3 標準圓角
+        padding: 0,
+        borderRadius: 28,
         maxHeight: '80%',
         overflow: 'hidden',
     },
@@ -146,6 +179,9 @@ const styles = StyleSheet.create({
         paddingVertical: 12,
         borderTopWidth: 0.5,
         borderTopColor: 'rgba(0,0,0,0.1)',
+    },
+    customFieldWrapper: {
+        marginTop: 12,
     },
 });
 

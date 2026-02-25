@@ -2,8 +2,9 @@
  * @param {string} title - 使用者輸入的打席標題
  * @param {string} note - 使用者輸入的備註
  * @param {Array} records - 原始投球紀錄數組
+ * @param {Object} customSummaryValues - 自訂打席彙整欄位的值 { [fieldId]: value }
  */
-export const formatAtBatData = (title, note, records = []) => {
+export const formatAtBatData = (title, note, records = [], customSummaryValues = {}) => {
     const safeRecords = Array.isArray(records) ? records : [];
 
     // 取得最後一球的狀態 (目前的球數)
@@ -18,22 +19,24 @@ export const formatAtBatData = (title, note, records = []) => {
     if (latest.runningBalls >= 4) outcome = '保送';
 
     return {
-        atBatLabel: title || '未命名打席', // ✅ 新增：存入使用者自訂的標題
-        finalOutcome: outcome,           // 優化：根據球數給予初步結果
+        atBatLabel: title || '未命名打席',
+        finalOutcome: outcome,
         summaryNote: note || '',
+        customSummaryValues,              // 自訂打席彙整欄位值
         totalPitches: safeRecords.length,
         pitchRecords: safeRecords.map(r => ({
             pitchType: r?.pitchType || '',
             result: r?.result || '',
             speed: Number(r?.speed) || 0,
             cellNumber: Number(r?.cellNumber) || 0,
-            gridX: r?.gridX || 0,         // 確保座標也被存入摘要，方便未來回放
+            gridX: r?.gridX || 0,
             gridY: r?.gridY || 0,
             note: r?.note || '',
+            customPitchValues: r?.customPitchValues || {}, // 自訂打席備註欄位值
         })),
         finalBalls: latest?.runningBalls || 0,
         finalStrikes: latest?.runningStrikes || 0,
         startAt: firstPitch?.createdAt || new Date(),
-        updatedAt: new Date(),            // 增加更新時間紀錄
+        updatedAt: new Date(),
     };
 };
