@@ -21,6 +21,9 @@ jest.mock('../src/services/firebaseService', () => ({
 
 // Mock Target Hooks and Services
 jest.mock('../src/hooks/api/useHistoryData');
+jest.mock('../src/hooks/ui/useHistoryFilter', () => ({
+    useHistoryFilter: jest.fn(),
+}));
 jest.mock('../src/services/atBatSummaryService', () => ({
     deleteAtBatSummary: jest.fn(),
     updateAtBatSummaryPitches: jest.fn(),
@@ -31,6 +34,7 @@ import { render, fireEvent } from '@testing-library/react-native';
 import { View, Text, TouchableOpacity, FlatList } from 'react-native';
 import HistoryScreen from '../src/screens/HistoryScreen';
 import { useHistoryData } from '../src/hooks/api/useHistoryData';
+import { useHistoryFilter } from '../src/hooks/ui/useHistoryFilter';
 import { deleteAtBatSummary, updateAtBatSummaryPitches } from '../src/services/atBatSummaryService';
 
 // Mock react-native-paper
@@ -64,6 +68,8 @@ jest.mock('react-native-paper', () => {
             Icon: () => <View testID="list-icon" />,
         },
         ActivityIndicator: (props) => <View {...props} testID="loading-indicator" />,
+        IconButton: (props) => <TouchableOpacity onPress={props.onPress} testID="icon-button" />,
+        Badge: (props) => <View {...props} testID="badge" />,
     };
 });
 
@@ -73,6 +79,7 @@ jest.mock('react-native-safe-area-context', () => {
     const { View } = require('react-native');
     return {
         SafeAreaView: ({ children }) => <View>{children}</View>,
+        useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
     };
 });
 
@@ -83,6 +90,12 @@ jest.mock('@expo/vector-icons', () => {
     return {
         Feather: ({ name }) => <View testID={`icon-${name}`} />,
     };
+});
+
+jest.mock('@expo/vector-icons/MaterialCommunityIcons', () => {
+    const React = require('react');
+    const { View } = require('react-native');
+    return ({ name }) => <View testID={`mci-icon-${name}`} />;
 });
 
 // Mock HistoryDataModal
@@ -102,9 +115,32 @@ jest.mock('../src/components/modals/HistoryDataModal', () => {
     );
 });
 
+// Mock HistoryFilterModal
+jest.mock('../src/components/modals/HistoryFilterModal', () => {
+    const React = require('react');
+    const { View, Button } = require('react-native');
+    return (props) => (
+        <View testID="filter-modal">
+            {props.visible && (
+                <View>
+                    <Button title="Apply Filter" onPress={() => props.onApply({})} />
+                    <Button title="Close Filter" onPress={props.onDismiss} />
+                </View>
+            )}
+        </View>
+    );
+});
+
 describe('HistoryScreen 測試', () => {
     beforeEach(() => {
         jest.clearAllMocks();
+        useHistoryFilter.mockImplementation((history) => ({
+            filters: {},
+            isFilterActive: false,
+            filteredHistory: history,
+            applyFilters: jest.fn(),
+            clearFilters: jest.fn()
+        }));
     });
 
     describe('【UI Render】', () => {
