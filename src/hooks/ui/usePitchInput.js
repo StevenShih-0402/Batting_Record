@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAlert } from '../../context/AlertContext';
 import { usePreferences } from '../../context/PreferencesContext';
+import { getFieldQueue, pushToFieldQueue } from './useCustomFieldQueue';
 import { PITCH_RESULTS } from '../../constants/GameConstants';
 
 export const usePitchInput = (isVisible, cellInfo, atBatStatus, onSave) => {
@@ -19,6 +20,7 @@ export const usePitchInput = (isVisible, cellInfo, atBatStatus, onSave) => {
      * 自訂打席備註欄位的輸入值，key 為 fieldId。
      */
     const [customValues, setCustomValues] = useState({});
+    const [fieldQueues, setFieldQueues] = useState({});
 
     // 當 context 載入完成或 isVisible 變更時，重置/更新預設值
     useEffect(() => {
@@ -28,8 +30,19 @@ export const usePitchInput = (isVisible, cellInfo, atBatStatus, onSave) => {
             setSpeed('');
             setNote('');
             setCustomValues({});
+        } else {
+            const loadQueues = async () => {
+                const queues = {};
+                for (const field of customPitchFields) {
+                    if (field.type === 'text') {
+                        queues[field.id] = await getFieldQueue(field.id);
+                    }
+                }
+                setFieldQueues(queues);
+            };
+            loadQueues();
         }
-    }, [isVisible, pitchTypes]);
+    }, [isVisible, pitchTypes, customPitchFields]);
 
     /**
      * 設定單一自訂欄位的值。
@@ -68,7 +81,13 @@ export const usePitchInput = (isVisible, cellInfo, atBatStatus, onSave) => {
             return;
         }
 
-        // 3. 資料準備與執行
+        // 3. 儲存 Queue 與資料準備
+        for (const field of customPitchFields) {
+            if (field.type === 'text' && customValues[field.id]) {
+                await pushToFieldQueue(field.id, customValues[field.id]);
+            }
+        }
+
         const finalSpeed = parseFloat(speed) || 0;
         const data = {
             pitchType,
@@ -93,5 +112,6 @@ export const usePitchInput = (isVisible, cellInfo, atBatStatus, onSave) => {
         getResultOptions,
         handleSave,
         pitchTypes,
+        fieldQueues,
     };
 };

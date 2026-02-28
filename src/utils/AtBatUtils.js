@@ -8,7 +8,7 @@ export const formatAtBatData = (title, note, records = [], customSummaryValues =
     const safeRecords = Array.isArray(records) ? records : [];
 
     // 取得最後一球的狀態 (目前的球數)
-    const latest = safeRecords.length > 0 ? safeRecords[0] : { runningBalls: 0, runningStrikes: 0 };
+    const latest = (safeRecords.length > 0 && safeRecords[0]) ? safeRecords[0] : { runningBalls: 0, runningStrikes: 0 };
 
     // 取得第一球的時間作為開始時間 (通常紀錄在數組最後端)
     const firstPitch = safeRecords.length > 0 ? safeRecords[safeRecords.length - 1] : null;

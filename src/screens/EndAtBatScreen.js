@@ -11,7 +11,6 @@ import SelectionDropdown from '../components/forms/SelectionDropdown';
 
 // 匯入 hook
 import { useEndAtBat } from '../hooks/ui/useEndAtBat';
-import { getFieldQueue, pushToFieldQueue } from '../hooks/ui/useCustomFieldQueue';
 
 const EndAtBatScreen = ({ navigation, route }) => {
     const theme = useTheme();
@@ -25,40 +24,14 @@ const EndAtBatScreen = ({ navigation, route }) => {
         customSummaryFields,
         summaryCustomValues,
         setSummaryCustomValue,
+        fieldQueues,
     } = useEndAtBat(true, atBatRecords, async (summary) => {
         if (onSave) await onSave(summary);
         navigation.goBack();
     }, () => navigation.goBack());
 
-    // 每個 text 型彙整欄位的 Queue 快速選項
-    const [fieldQueues, setFieldQueues] = useState({});
-
-    // 當 Screen 開啟或欄位定義變更時，載入各欄位的 Queue
-    useEffect(() => {
-        const loadQueues = async () => {
-            const queues = {};
-            for (const field of customSummaryFields) {
-                if (field.type === 'text') {
-                    queues[field.id] = await getFieldQueue(field.id);
-                }
-            }
-            setFieldQueues(queues);
-        };
-        loadQueues();
-    }, [customSummaryFields]);
-
     const strikes = atBatRecords.length > 0 ? atBatRecords[0].runningStrikes : 0;
     const balls = atBatRecords.length > 0 ? atBatRecords[0].runningBalls : 0;
-
-    // 儲存時同步 Queue
-    const handleSaveWithQueue = async () => {
-        for (const field of customSummaryFields) {
-            if (field.type === 'text' && summaryCustomValues[field.id]) {
-                await pushToFieldQueue(field.id, summaryCustomValues[field.id]);
-            }
-        }
-        await handleSave();
-    };
 
     /**
      * 渲染單一自訂打席彙整欄位。
@@ -133,7 +106,7 @@ const EndAtBatScreen = ({ navigation, route }) => {
                         {/* 標題輸入框 */}
                         <TextInput
                             label="標題"
-                            placeholder="這是誰的打席?"
+                            placeholder="例如：這是誰的打席?"
                             value={atBatTitle}
                             onChangeText={setAtBatTitle}
                             mode="outlined"
@@ -154,7 +127,7 @@ const EndAtBatScreen = ({ navigation, route }) => {
 
                         <Button
                             mode="contained"
-                            onPress={handleSaveWithQueue}
+                            onPress={handleSave}
                             loading={isSaving}
                             disabled={isSaving}
                             icon="content-save-check"

@@ -3,118 +3,38 @@
 import React, { useState } from 'react';
 import { View, ScrollView, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { Text, TextInput, Button, useTheme, Chip, Divider, IconButton, ActivityIndicator, SegmentedButtons } from 'react-native-paper';
-import { usePreferences } from '../context/PreferencesContext';
 import { useFieldEditor } from '../hooks/ui/useFieldEditor';
 import { useNavigation } from '@react-navigation/native';
-import { useAlert } from '../context/AlertContext';
-import { v4 as uuidv4 } from 'uuid';
-
-// 預設提供的主題色選項
-const THEME_COLORS = [
-    '#E81416', // 紅色 (Red)
-    '#EF2B7C', // 粉紅色 (Fuchsia)
-    '#FEF250', // 黃色 (Lemon Yellow)
-    '#339C5E', // 綠色 (Kelly Green)
-    '#00E5FF', // 預設青色 (Cyan)
-    '#B026FF', // 紫色 (Neon Purple)
-    '#F2D3BC', // 膚色 (Skin)
-    '#FFCED5', // 淺粉紅色 (Light Pink)
-    '#F8F1AE', // 淺黃色 (Pastel Yellow)
-    '#75D09A', // 淺綠色 (Mint Green)
-    '#ADD8E6', // 淺藍色 (Light Blue)
-    '#DCD0FF', // 淺紫色 (Lilac)
-];
+import { usePreferenceUI } from '../hooks/ui/usePreferenceUI';
+import { THEME_COLORS } from '../constants/Colors';
 
 const PreferenceScreen = () => {
     const theme = useTheme();
     const navigation = useNavigation();
-    const { showSuccess, showError } = useAlert();
+
     const {
-        pitchTypes, primaryColor,
-        customPitchFields, customSummaryFields,
-        savePreferences, isLoading
-    } = usePreferences();
-
-    // 本地狀態管理，直到按下儲存
-    const [localPitchTypes, setLocalPitchTypes] = useState([...pitchTypes]);
-    const [localColor, setLocalColor] = useState(primaryColor);
-    const [localPitchFields, setLocalPitchFields] = useState([...customPitchFields]);
-    const [localSummaryFields, setLocalSummaryFields] = useState([...customSummaryFields]);
-
-    const [newPitchType, setNewPitchType] = useState('');
-    const [isSaving, setIsSaving] = useState(false);
+        isLoading,
+        isSaving,
+        localColor,
+        setLocalColor,
+        localPitchTypes,
+        newPitchType,
+        setNewPitchType,
+        addPitchType,
+        removePitchType,
+        localPitchFields,
+        setLocalPitchFields,
+        localSummaryFields,
+        setLocalSummaryFields,
+        addCustomField,
+        removeCustomField,
+        handleSave,
+    } = usePreferenceUI(navigation);
 
     // 自訂打席備註欄位編輯器
     const pitchEditor = useFieldEditor();
     // 自訂打席彙整欄位編輯器
     const summaryEditor = useFieldEditor();
-
-    // 處理球種更新
-    const addPitchType = () => {
-        if (!newPitchType.trim()) return;
-        if (localPitchTypes.includes(newPitchType.trim())) {
-            showError('重複項目', '此球種已存在');
-            return;
-        }
-        setLocalPitchTypes([...localPitchTypes, newPitchType.trim()]);
-        setNewPitchType('');
-    };
-
-    const removePitchType = (index) => {
-        const newList = [...localPitchTypes];
-        newList.splice(index, 1);
-        setLocalPitchTypes(newList);
-    };
-
-    /**
-     * 將編輯器的欄位定義加入指定的欄位清單。
-     */
-    const addCustomField = (editor, setList) => {
-        if (!editor.label.trim()) {
-            showError('欄位名稱不得為空', '請輸入欄位名稱');
-            return;
-        }
-        if (editor.type === 'dropdown' && editor.options.length === 0) {
-            showError('請新增選項', '下拉選單型欄位至少需要一個選項');
-            return;
-        }
-        const newField = {
-            id: uuidv4(),
-            label: editor.label.trim(),
-            type: editor.type,
-            options: editor.type === 'dropdown' ? [...editor.options] : [],
-        };
-        setList((prev) => [...prev, newField]);
-        editor.reset();
-    };
-
-    const removeCustomField = (setList, id) => {
-        setList((prev) => prev.filter((f) => f.id !== id));
-    };
-
-    // 儲存所有變更
-    const handleSave = async () => {
-        setIsSaving(true);
-        try {
-            const success = await savePreferences(
-                localPitchTypes,
-                localColor,
-                localPitchFields,
-                localSummaryFields
-            );
-            if (success) {
-                showSuccess('儲存成功', '偏好設定已更新');
-                navigation.goBack();
-            } else {
-                showError('儲存失敗', '請稍後再試');
-            }
-        } catch (error) {
-            console.error(error);
-            showError('發生錯誤', error.message);
-        } finally {
-            setIsSaving(false);
-        }
-    };
 
     if (isLoading) {
         return (
@@ -283,10 +203,11 @@ const PreferenceScreen = () => {
                     {/* 3. 自訂打席備註欄位 */}
                     <View style={styles.section}>
                         <Text variant="titleMedium" style={{ color: theme.colors.primary, marginBottom: 4 }}>
-                            自訂打席備註欄位
+                            自訂打席記錄欄位
                         </Text>
                         <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginBottom: 12 }}>
-                            出現在每球的輸入 Modal，顯示於打席詳情的「球種(位置)」下方
+                            {/* 出現在每球的輸入 Modal，顯示於打席詳情的「球種(位置)」下方 */}
+                            可在九宮格紀錄好壞球時，加上想要額外紀錄的欄位，例如：擊球仰角、飛行距離等。
                         </Text>
                         {renderFieldEditor(pitchEditor, localPitchFields, setLocalPitchFields)}
                     </View>
@@ -299,7 +220,7 @@ const PreferenceScreen = () => {
                             自訂打席彙整欄位
                         </Text>
                         <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginBottom: 12 }}>
-                            出現在結束打席 Modal，顯示於歷史紀錄的「日期｜球數」下方
+                            打席結束彙整資料時，除了預設的標題與文字備註，也可以自訂欄位，例如：選手姓名、擊球方向等。
                         </Text>
                         {renderFieldEditor(summaryEditor, localSummaryFields, setLocalSummaryFields)}
                     </View>

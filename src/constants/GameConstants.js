@@ -3,7 +3,7 @@
 const DOT_SIZE = 32
 const GRID_CELL_SIZE = 3; 
 const GRID_WIDTH_RATIO = 0.6;
-const PITCH_TYPES_ZH = ['四縫線快速球', '變速球', '滑球', '橫掃球', '曲球', '伸卡球', '其他'];
+const PITCH_TYPES_ZH = ['四縫線快速球', '變速球', '滑球', '曲球', '其他'];
 const PITCH_RESULTS = ['好球', '壞球', '界外', '打擊出去']; 
 
 // 迷你九宮格

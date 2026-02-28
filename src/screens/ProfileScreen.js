@@ -5,26 +5,14 @@ import { View, StyleSheet } from 'react-native';
 import { Text, Avatar, Button, List, Divider, useTheme } from 'react-native-paper';
 
 import { useAuth } from '../hooks/auth/useAuth';
-import { useAlert } from '../context/AlertContext';
+import { useProfileUI } from '../hooks/ui/useProfileUI';
 
 const ProfileScreen = ({ navigation }) => {
     const theme = useTheme();
     const { user } = useAuth();
-    const { showSuccess, showWarning, showError } = useAlert();
+    const { handleLogout } = useProfileUI();
 
-    const handleLogout = async () => {
-        const { signOutUser } = require('../services/authService');
-        try {
-            const success = await signOutUser();
-            if (success) {
-                showSuccess("已登出");
-            } else {
-                showWarning("提示", "訪客用戶無法登出，請先綁定 Google 或 Email 帳號");
-            }
-        } catch (error) {
-            console.error(error);
-        }
-    };
+    // handleLogout 已移至 useProfileUI
 
 
 

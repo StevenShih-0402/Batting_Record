@@ -13,7 +13,6 @@ import NoteInput from '../components/forms/NoteInput';
 
 // 匯入 hook
 import { usePitchInput } from '../hooks/ui/usePitchInput';
-import { getFieldQueue, pushToFieldQueue } from '../hooks/ui/useCustomFieldQueue';
 
 const PitchInputScreen = ({ navigation, route }) => {
     const theme = useTheme();
@@ -24,38 +23,11 @@ const PitchInputScreen = ({ navigation, route }) => {
     const {
         form, setPitchType, setResult, setSpeed, setNote,
         getResultOptions, handleSave, pitchTypes,
-        customPitchFields, customValues, setCustomValue, isSaving
+        customPitchFields, customValues, setCustomValue, isSaving, fieldQueues
     } = usePitchInput(true, cellInfo, atBatStatus, async (savedPitch) => {
         if (onSave) await onSave(savedPitch);
         navigation.goBack();
     });
-
-    // 每個 text 型欄位的 Queue 快速選項
-    const [fieldQueues, setFieldQueues] = useState({});
-
-    // 當 Modal 開啟或欄位定義變更時，載入各欄位的 Queue
-    useEffect(() => {
-        const loadQueues = async () => {
-            const queues = {};
-            for (const field of customPitchFields) {
-                if (field.type === 'text') {
-                    queues[field.id] = await getFieldQueue(field.id);
-                }
-            }
-            setFieldQueues(queues);
-        };
-        loadQueues();
-    }, [customPitchFields]);
-
-    // 儲存時同步 Queue
-    const handleSaveWithQueue = async () => {
-        for (const field of customPitchFields) {
-            if (field.type === 'text' && customValues[field.id]) {
-                await pushToFieldQueue(field.id, customValues[field.id]);
-            }
-        }
-        await handleSave();
-    };
 
     /**
      * 渲染單一自訂打席備註欄位
@@ -158,7 +130,7 @@ const PitchInputScreen = ({ navigation, route }) => {
 
                         <Button
                             mode="contained"
-                            onPress={handleSaveWithQueue}
+                            onPress={handleSave}
                             loading={isSaving}
                             disabled={isSaving || atBatStatus?.lastResult === '打擊出去'}
                             style={styles.saveButton}

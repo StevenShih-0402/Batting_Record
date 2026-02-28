@@ -8,7 +8,7 @@ import { Text, Button, IconButton, useTheme, Divider, Surface } from 'react-nati
 import { useAlert } from '../context/AlertContext';
 import { usePreferences } from '../context/PreferencesContext';
 import { getColorByResult } from '../constants/Colors';
-import { deleteAtBatSummary, updateAtBatSummaryPitches } from '../services/atBatSummaryService';
+import { useHistoryDetail } from '../hooks/ui/useHistoryDetail';
 
 // 使用與 StrikeZoneScreen 相同的九宮格組件
 import PitchGrid from '../components/common/PitchGrid';
@@ -23,17 +23,14 @@ import PitchHistoryDots from '../components/PitchHistoryDots';
 const HistoryDetailScreen = ({ navigation, route }) => {
     const theme = useTheme();
     const { record } = route.params || {};
-    const { showWarning } = useAlert();
     const { customPitchFields } = usePreferences();
-    const [localPitches, setLocalPitches] = useState([]);
-    const [gridLayout, setGridLayout] = useState(null);
-
-
-    useEffect(() => {
-        if (record && record.pitchRecords) {
-            setLocalPitches(record.pitchRecords);
-        }
-    }, [record]);
+    const {
+        localPitches,
+        gridLayout,
+        handleGridLayout,
+        handleDeleteWholeRecord,
+        handleEditPitch
+    } = useHistoryDetail(record, navigation);
 
     if (!record) {
         return (
@@ -44,62 +41,6 @@ const HistoryDetailScreen = ({ navigation, route }) => {
             </SafeAreaView>
         );
     }
-
-    // 處理九宮格佈局回傳
-    const handleGridLayout = (e) => {
-        const { width, height } = e.nativeEvent.layout;
-        setGridLayout({ width, height });
-    };
-
-    // 處理單顆球的刪除
-    const handleDeleteSinglePitch = (index) => {
-        showWarning('刪除球點', '確定要刪除這顆球嗎？', [
-            { text: '取消', style: 'cancel' },
-            {
-                text: '刪除',
-                onPress: async () => {
-                    const newPitches = [...localPitches];
-                    newPitches.splice(index, 1);
-                    setLocalPitches(newPitches);
-                    await updateAtBatSummaryPitches(record.id, newPitches);
-                }
-            }
-        ]);
-    };
-
-    // 處理整筆紀錄刪除
-    const handleDeleteWholeRecord = () => {
-        showWarning('刪除整筆紀錄', '確定要刪除這個打席的所有資料嗎？', [
-            { text: '取消', style: 'cancel' },
-            {
-                text: '確認刪除',
-                onPress: async () => {
-                    await deleteAtBatSummary(record.id);
-                    navigation.goBack();
-                }
-            }
-        ]);
-    };
-
-    // 處理編輯單球 - 導航至 PitchEdit
-    const handleEditPitch = (index) => {
-        const pitchToEdit = localPitches[index];
-        navigation.navigate('PitchEdit', {
-            record: pitchToEdit,
-            onSave: async (updatedData) => {
-                const newPitches = [...localPitches];
-                newPitches[index] = {
-                    ...newPitches[index],
-                    ...updatedData,
-                };
-                setLocalPitches(newPitches);
-                await updateAtBatSummaryPitches(record.id, newPitches);
-            },
-            onDelete: () => {
-                handleDeleteSinglePitch(index);
-            }
-        });
-    };
 
     /**
      * 渲染投球列表的每一列，在球種(位置)下方顯示自訂打席備註欄位值。
@@ -211,7 +152,7 @@ const HistoryDetailScreen = ({ navigation, route }) => {
                 {/* 球數列表 */}
                 <View style={{ paddingHorizontal: 15 }}>
                     <Text variant="titleMedium" style={{ marginBottom: 10 }}>
-                        投球詳細數據 ({localPitches.length})
+                        詳細數據 ({localPitches.length})
                     </Text>
                     {localPitches.map((pitch, index) => renderPitchRow(pitch, index))}
                 </View>
@@ -225,7 +166,7 @@ const HistoryDetailScreen = ({ navigation, route }) => {
                     icon="delete"
                     onPress={handleDeleteWholeRecord}
                 >
-                    刪除此打席紀錄
+                    刪除打席紀錄
                 </Button>
             </View>
 

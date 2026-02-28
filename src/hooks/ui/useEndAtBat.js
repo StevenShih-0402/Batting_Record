@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAlert } from '../../context/AlertContext';
 import { usePreferences } from '../../context/PreferencesContext';
+import { getFieldQueue, pushToFieldQueue } from './useCustomFieldQueue';
 
 export const useEndAtBat = (isVisible, atBatRecords, onSave, onClose) => {
     const [summaryNote, setSummaryNote] = useState('');
@@ -15,15 +16,27 @@ export const useEndAtBat = (isVisible, atBatRecords, onSave, onClose) => {
      * 自訂打席彙整欄位的輸入值，key 為 fieldId。
      */
     const [summaryCustomValues, setSummaryCustomValues] = useState({});
+    const [fieldQueues, setFieldQueues] = useState({});
 
-    // Modal 開啟時清空內容，重置狀態
+    // Modal 開啟時清空內容，重置狀態，並載入彙整欄位 Queue
     useEffect(() => {
         if (isVisible) {
             setAtBatTitle('');
             setSummaryNote('');
             setSummaryCustomValues({});
+
+            const loadQueues = async () => {
+                const queues = {};
+                for (const field of customSummaryFields) {
+                    if (field.type === 'text') {
+                        queues[field.id] = await getFieldQueue(field.id);
+                    }
+                }
+                setFieldQueues(queues);
+            };
+            loadQueues();
         }
-    }, [isVisible]);
+    }, [isVisible, customSummaryFields]);
 
     /**
      * 設定單一自訂彙整欄位的值。
@@ -39,6 +52,13 @@ export const useEndAtBat = (isVisible, atBatRecords, onSave, onClose) => {
 
         setIsSaving(true);
         try {
+            // 儲存前針對文字欄位推送 Queue
+            for (const field of customSummaryFields) {
+                if (field.type === 'text' && summaryCustomValues[field.id]) {
+                    await pushToFieldQueue(field.id, summaryCustomValues[field.id]);
+                }
+            }
+
             // 如果標題沒填，給一個預設文字
             const finalTitle = atBatTitle.trim() || `${new Date().toLocaleTimeString()}`;
             // 1. 執行原本的儲存邏輯
@@ -77,5 +97,6 @@ export const useEndAtBat = (isVisible, atBatRecords, onSave, onClose) => {
         customSummaryFields,
         summaryCustomValues,
         setSummaryCustomValue,
+        fieldQueues,
     };
 };

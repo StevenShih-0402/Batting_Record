@@ -2,10 +2,13 @@
 // 歷史紀錄篩選彈出視窗 (Native Stack Screen)
 
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, TouchableWithoutFeedback, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableWithoutFeedback, KeyboardAvoidingView, Platform, Keyboard, TouchableOpacity } from 'react-native';
 import { Text, TextInput, Button, useTheme } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import Modal from 'react-native-modal';
 import { usePreferences } from '../context/PreferencesContext';
+import { useHistoryFilterUI } from '../hooks/ui/useHistoryFilterUI';
 
 const HistoryFilterScreen = ({ navigation, route }) => {
     const theme = useTheme();
@@ -13,43 +16,17 @@ const HistoryFilterScreen = ({ navigation, route }) => {
 
     const { onApply, onClear, initialFilters } = route.params || {};
 
-    const [localFilters, setLocalFilters] = useState({
-        title: '',
-        startDate: '',
-        endDate: '',
-        minPitches: '',
-        maxPitches: '',
-        note: '',
-        customFields: {}
-    });
-
-    // 初始化篩選器狀態
-    useEffect(() => {
-        setLocalFilters(initialFilters || {
-            title: '', startDate: '', endDate: '',
-            minPitches: '', maxPitches: '', note: '', customFields: {}
-        });
-    }, [initialFilters]);
-
-    const handleCustomFieldChange = (id, value) => {
-        setLocalFilters(prev => ({
-            ...prev,
-            customFields: {
-                ...prev.customFields,
-                [id]: value
-            }
-        }));
-    };
-
-    const handleApply = () => {
-        if (onApply) onApply(localFilters);
-        navigation.goBack();
-    };
-
-    const handleClear = () => {
-        if (onClear) onClear();
-        navigation.goBack();
-    };
+    const {
+        localFilters,
+        setLocalFilters,
+        handleCustomFieldChange,
+        handleApply,
+        handleClear,
+        datePickerConfig,
+        openDatePicker,
+        onDateChange,
+        confirmIOSDate
+    } = useHistoryFilterUI(initialFilters, onApply, onClear, navigation);
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -63,11 +40,11 @@ const HistoryFilterScreen = ({ navigation, route }) => {
                         keyboardShouldPersistTaps="handled"
                         contentContainerStyle={{ padding: 20, paddingTop: 32, paddingBottom: 36 }}
                     >
-                        <Text style={[styles.title, { color: theme.colors.primary }]}>篩選紀錄</Text>
+                        <Text style={[styles.title, { color: theme.colors.primary }]}>篩選器</Text>
 
                         {/* 標題與結果 */}
                         <TextInput
-                            label="標題或結果包含"
+                            label="標題"
                             mode="outlined"
                             value={localFilters.title}
                             onChangeText={(txt) => setLocalFilters({ ...localFilters, title: txt })}
@@ -76,24 +53,30 @@ const HistoryFilterScreen = ({ navigation, route }) => {
 
                         {/* 日期區間 */}
                         <View style={styles.row}>
-                            <TextInput
-                                label="開始日期 (YYYY-MM-DD)"
-                                mode="outlined"
-                                value={localFilters.startDate}
-                                onChangeText={(txt) => setLocalFilters({ ...localFilters, startDate: txt })}
-                                style={[styles.inputItem, { flex: 1, marginRight: 4 }]}
-                                keyboardType="numeric"
-                                placeholder="例: 2026-01-01"
-                            />
-                            <TextInput
-                                label="結束日期 (YYYY-MM-DD)"
-                                mode="outlined"
-                                value={localFilters.endDate}
-                                onChangeText={(txt) => setLocalFilters({ ...localFilters, endDate: txt })}
-                                style={[styles.inputItem, { flex: 1, marginLeft: 4 }]}
-                                keyboardType="numeric"
-                                placeholder="例: 2026-12-31"
-                            />
+                            <TouchableOpacity testID="btn-開始日期" style={{ flex: 1, marginRight: 4 }} onPress={() => openDatePicker('start')}>
+                                <View pointerEvents="none">
+                                    <TextInput
+                                        label="開始日期"
+                                        mode="outlined"
+                                        value={localFilters.startDate}
+                                        style={styles.inputItem}
+                                        placeholder="未選擇"
+                                        right={<TextInput.Icon icon="calendar" />}
+                                    />
+                                </View>
+                            </TouchableOpacity>
+                            <TouchableOpacity testID="btn-結束日期" style={{ flex: 1, marginLeft: 4 }} onPress={() => openDatePicker('end')}>
+                                <View pointerEvents="none">
+                                    <TextInput
+                                        label="結束日期"
+                                        mode="outlined"
+                                        value={localFilters.endDate}
+                                        style={styles.inputItem}
+                                        placeholder="未選擇"
+                                        right={<TextInput.Icon icon="calendar" />}
+                                    />
+                                </View>
+                            </TouchableOpacity>
                         </View>
 
                         {/* 球數區間 */}
@@ -118,7 +101,7 @@ const HistoryFilterScreen = ({ navigation, route }) => {
 
                         {/* 備註 */}
                         <TextInput
-                            label="備註包含"
+                            label="備註"
                             mode="outlined"
                             value={localFilters.note}
                             onChangeText={(txt) => setLocalFilters({ ...localFilters, note: txt })}
@@ -134,7 +117,7 @@ const HistoryFilterScreen = ({ navigation, route }) => {
                                 {customSummaryFields.map(field => (
                                     <TextInput
                                         key={field.id}
-                                        label={`${field.label}包含`}
+                                        label={`${field.label}`}
                                         mode="outlined"
                                         value={localFilters.customFields?.[field.id] || ''}
                                         onChangeText={(val) => handleCustomFieldChange(field.id, val)}
@@ -164,6 +147,40 @@ const HistoryFilterScreen = ({ navigation, route }) => {
                     </ScrollView>
                 </TouchableWithoutFeedback>
             </KeyboardAvoidingView>
+
+            {/* Android 的 DatePicker (非 Modal) */}
+            {Platform.OS === 'android' && datePickerConfig.show && (
+                <DateTimePicker
+                    value={datePickerConfig.date}
+                    mode="date"
+                    display="spinner"
+                    onChange={onDateChange}
+                />
+            )}
+
+            {/* iOS 的 DatePicker (Modal 呈現) */}
+            {Platform.OS === 'ios' && (
+                <Modal
+                    isVisible={datePickerConfig.show}
+                    onBackdropPress={confirmIOSDate}
+                    style={styles.iosModal}
+                >
+                    <View style={[styles.iosPickerContainer, { backgroundColor: theme.colors.surface }]}>
+                        <View style={styles.iosPickerHeader}>
+                            <TouchableOpacity onPress={confirmIOSDate}>
+                                <Text style={{ color: theme.colors.primary, fontSize: 16, fontWeight: 'bold' }}>完成</Text>
+                            </TouchableOpacity>
+                        </View>
+                        <DateTimePicker
+                            value={datePickerConfig.date}
+                            mode="date"
+                            display="spinner"
+                            onChange={onDateChange}
+                            textColor={theme.colors.onSurface}
+                        />
+                    </View>
+                </Modal>
+            )}
         </SafeAreaView>
     );
 };
@@ -208,6 +225,23 @@ const styles = StyleSheet.create({
     actionButton: {
         marginLeft: 12,
         minWidth: 80
+    },
+    iosModal: {
+        justifyContent: 'flex-end',
+        margin: 0,
+    },
+    iosPickerContainer: {
+        borderTopLeftRadius: 16,
+        borderTopRightRadius: 16,
+        paddingBottom: 40,
+        paddingTop: 10,
+    },
+    iosPickerHeader: {
+        alignItems: 'flex-end',
+        paddingHorizontal: 20,
+        paddingVertical: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: '#eee',
     }
 });
 
