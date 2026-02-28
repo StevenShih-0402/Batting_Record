@@ -14,6 +14,10 @@ import EditProfileScreen from './src/screens/EditProfileScreen';
 import BattingListScreen from './src/screens/BattingListScreen';
 import HistoryDetailScreen from './src/screens/HistoryDetailScreen';
 import PreferenceScreen from './src/screens/PreferenceScreen'; // Import PreferenceScreen
+import EndAtBatScreen from './src/screens/EndAtBatScreen';
+import HistoryFilterScreen from './src/screens/HistoryFilterScreen';
+import PitchEditScreen from './src/screens/PitchEditScreen';
+import PitchInputScreen from './src/screens/PitchInputScreen';
 
 import MainTabs from './src/components/MainTabs';
 import { AlertProvider } from './src/context/AlertContext';
@@ -110,6 +114,28 @@ const MainContent = () => {
                                         headerStyle: { backgroundColor: dynamicTheme.colors.surface },
                                         headerTintColor: dynamicTheme.colors.onSurface,
                                     }}
+                                />
+
+                                {/* Modal Screens */}
+                                <Stack.Screen
+                                    name="EndAtBat"
+                                    component={EndAtBatScreen}
+                                    options={{ presentation: 'modal', animation: 'slide_from_bottom', headerShown: false }}
+                                />
+                                <Stack.Screen
+                                    name="HistoryFilter"
+                                    component={HistoryFilterScreen}
+                                    options={{ presentation: 'modal', animation: 'slide_from_bottom', headerShown: false }}
+                                />
+                                <Stack.Screen
+                                    name="PitchEdit"
+                                    component={PitchEditScreen}
+                                    options={{ presentation: 'modal', animation: 'slide_from_bottom', headerShown: false }}
+                                />
+                                <Stack.Screen
+                                    name="PitchInput"
+                                    component={PitchInputScreen}
+                                    options={{ presentation: 'modal', animation: 'slide_from_bottom', headerShown: false }}
                                 />
                             </>
                         ) : (

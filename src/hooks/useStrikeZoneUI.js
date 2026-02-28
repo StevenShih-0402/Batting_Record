@@ -6,11 +6,8 @@ import { Layout } from '../constants/Layout';
 import { getCellNumber } from '../utils/PitchUtils'
 import { useAlert } from '../context/AlertContext';
 
-export const useStrikeZoneUI = ({ atBatStatus, handleSavePitch, handleUpdatePitch, handleDeletePitch }) => {
+export const useStrikeZoneUI = ({ atBatStatus, handleSavePitch, handleUpdatePitch, handleDeletePitch, navigation }) => {
     // --- Modal 狀態 ---
-    const [isPitchModalVisible, setIsPitchModalVisible] = useState(false);
-    const [isEditModalVisible, setIsEditModalVisible] = useState(false);
-    const [isEndModalVisible, setIsEndModalVisible] = useState(false);
     const [editingRecord, setEditingRecord] = useState(null);
     const [selectedCellInfo, setSelectedCellInfo] = useState({
         cellNumber: 0, gridX: 0, gridY: 0, isInside: false
@@ -106,15 +103,22 @@ export const useStrikeZoneUI = ({ atBatStatus, handleSavePitch, handleUpdatePitc
             const result = getCellNumber(pageX, pageY, gridLayout);
             console.log("計算結果:", result);
 
-            setSelectedCellInfo({
+            const newCellInfo = {
                 cellNumber: result.cellNumber,
                 isInside: result.isInside,
 
                 gridX: result.relX, // 直接存入，不要再除一次
                 gridY: result.relY,
+            };
+            setSelectedCellInfo(newCellInfo);
+
+            // Navigate to the PitchInput screen
+            navigation.navigate('PitchInput', {
+                cellInfo: newCellInfo,
+                atBatStatus: atBatStatus,
+                onSave: onSavePitchAction
             });
-            setIsPitchModalVisible(true);
-            console.log("Modal 開啟。");
+            console.log("導航到 PitchInput 畫面。");
         }
         else {
             console.warn("gridLayout 尚未就緒");
@@ -126,7 +130,7 @@ export const useStrikeZoneUI = ({ atBatStatus, handleSavePitch, handleUpdatePitc
         setIsSaving(true);
         try {
             await handleSavePitch(data);
-            setIsPitchModalVisible(false); // 自動關閉
+            // Modal is closed by navigation.goBack() in the screen itself
         } finally {
             setIsSaving(false);
         }
@@ -139,7 +143,6 @@ export const useStrikeZoneUI = ({ atBatStatus, handleSavePitch, handleUpdatePitc
         try {
             const success = await handleUpdatePitch(editingRecord.id, updatedData);
             if (success) {
-                setIsEditModalVisible(false);
                 setEditingRecord(null);
             }
         } finally {
@@ -156,7 +159,6 @@ export const useStrikeZoneUI = ({ atBatStatus, handleSavePitch, handleUpdatePitc
             await handleDeletePitch(recordId);
 
             // 強制執行關閉 (不再判斷 success，只要沒噴 error 就執行)
-            setIsEditModalVisible(false);
             setEditingRecord(null);
 
         } catch (error) {
@@ -169,16 +171,18 @@ export const useStrikeZoneUI = ({ atBatStatus, handleSavePitch, handleUpdatePitc
     // 4. 處理點擊編輯
     const handleEditPress = useCallback((record) => {
         setEditingRecord(record);
-        setIsEditModalVisible(true);
-    }, []);
+        navigation.navigate('PitchEdit', {
+            record: record,
+            onSave: onUpdatePitchAction,
+            onDelete: onDeletePitchAction
+        });
+    }, [navigation, onUpdatePitchAction, onDeletePitchAction]);
 
     return {
         panResponder: panResponder,
         // 狀態
         modals: {
-            pitch: { visible: isPitchModalVisible, set: setIsPitchModalVisible },
-            edit: { visible: isEditModalVisible, set: setIsEditModalVisible, record: editingRecord, setRecord: setEditingRecord },
-            end: { visible: isEndModalVisible, set: setIsEndModalVisible }
+            edit: { record: editingRecord, setRecord: setEditingRecord },
         },
         drawer: {
             isOpen: isDrawerOpen,
@@ -199,7 +203,6 @@ export const useStrikeZoneUI = ({ atBatStatus, handleSavePitch, handleUpdatePitc
             onUpdatePitch: onUpdatePitchAction,
             onDeletePitch: onDeletePitchAction,
             handleEditPress,
-            handlePitchModalClose: () => setIsPitchModalVisible(false),
         },
         // 函式
         handleScreenPress,

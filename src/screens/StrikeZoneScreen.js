@@ -12,12 +12,8 @@ import useAtBatRecords from '../hooks/useAtBatRecords';
 import { useStrikeZoneUI } from '../hooks/useStrikeZoneUI';
 import { getColorByResult, COLOR_BALL, COLOR_STRIKE } from '../constants/Colors';
 
-// 導入組件
 import PitchGrid from '../components/common/PitchGrid';
 import BallIndicator from '../components/common/BallIndicator';
-import PitchInputModal from '../components/modals/PitchInputModal';
-import EndAtBatModal from '../components/modals/EndAtBatModal';
-import PitchEditModal from '../components/modals/PitchEditModal';
 import PitchHistoryDots from '../components/PitchHistoryDots';
 
 
@@ -42,7 +38,8 @@ const StrikeZoneScreen = ({ navigation }) => {
         atBatStatus,
         handleSavePitch,
         handleUpdatePitch,
-        handleDeletePitch
+        handleDeletePitch,
+        navigation
     });
 
     return (
@@ -163,32 +160,6 @@ const StrikeZoneScreen = ({ navigation }) => {
                 <MaterialCommunityIcons name="clipboard-list" size={32} color={theme.colors.onPrimary} />
             </TouchableOpacity>
 
-
-            {/* 各式功能彈窗 (使用 ui.actions 接管 UI 流程) */}
-            <PitchInputModal
-                isVisible={ui.modals.pitch.visible}
-                onClose={ui.actions.handlePitchModalClose}
-                onSave={ui.actions.onSavePitch}
-                cellInfo={ui.selectedCellInfo}
-                isSaving={ui.isSaving}
-                atBatStatus={atBatStatus}
-            />
-
-            <PitchEditModal
-                isVisible={ui.modals.edit.visible}
-                record={ui.modals.edit.record}
-                onClose={() => ui.modals.edit.set(false)}
-                onSave={ui.actions.onUpdatePitch}
-                onDelete={ui.actions.onDeletePitch}
-                isSaving={ui.isSaving}
-            />
-
-            <EndAtBatModal
-                isVisible={ui.modals.end.visible}
-                onClose={() => ui.modals.end.set(false)}
-                onSave={handleSaveSummary}
-                atBatRecords={atBatRecords || []}     // 確保即使 atBatRecords 還沒算出來，至少傳入空陣列 []
-            />
         </SafeAreaView>
     );
 };

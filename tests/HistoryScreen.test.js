@@ -5,8 +5,12 @@ jest.mock('firebase/app', () => ({
     getApp: jest.fn(),
 }));
 jest.mock('firebase/auth', () => ({
-    getAuth: jest.fn(),
-    onAuthStateChanged: jest.fn(),
+    getAuth: jest.fn(() => ({
+        onAuthStateChanged: jest.fn((callback) => {
+            return jest.fn(); // mock unsubscribe function
+        })
+    })),
+    onAuthStateChanged: jest.fn(() => jest.fn()),
     signInAnonymously: jest.fn(),
     initializeAuth: jest.fn(),
     getReactNativePersistence: jest.fn(),
@@ -27,6 +31,13 @@ jest.mock('../src/hooks/ui/useHistoryFilter', () => ({
 jest.mock('../src/services/atBatSummaryService', () => ({
     deleteAtBatSummary: jest.fn(),
     updateAtBatSummaryPitches: jest.fn(),
+}));
+
+jest.mock('../src/context/PreferencesContext', () => ({
+    usePreferences: jest.fn(() => ({
+        customSummaryFields: []
+    })),
+    PreferencesProvider: ({ children }) => children,
 }));
 
 import React from 'react';
@@ -98,8 +109,8 @@ jest.mock('@expo/vector-icons/MaterialCommunityIcons', () => {
     return ({ name }) => <View testID={`mci-icon-${name}`} />;
 });
 
-// Mock HistoryDataModal
-jest.mock('../src/components/modals/HistoryDataModal', () => {
+// Mock HistoryDetailScreen
+jest.mock('../src/screens/HistoryDetailScreen', () => {
     const React = require('react');
     const { View, Button } = require('react-native');
     return (props) => (
@@ -115,25 +126,16 @@ jest.mock('../src/components/modals/HistoryDataModal', () => {
     );
 });
 
-// Mock HistoryFilterModal
-jest.mock('../src/components/modals/HistoryFilterModal', () => {
-    const React = require('react');
-    const { View, Button } = require('react-native');
-    return (props) => (
-        <View testID="filter-modal">
-            {props.visible && (
-                <View>
-                    <Button title="Apply Filter" onPress={() => props.onApply({})} />
-                    <Button title="Close Filter" onPress={props.onDismiss} />
-                </View>
-            )}
-        </View>
-    );
-});
+const mockNavigate = jest.fn();
 
 describe('HistoryScreen 測試', () => {
+    let mockNavigation;
+
     beforeEach(() => {
         jest.clearAllMocks();
+        mockNavigate.mockClear();
+        mockNavigation = { navigate: mockNavigate };
+
         useHistoryFilter.mockImplementation((history) => ({
             filters: {},
             isFilterActive: false,
@@ -150,7 +152,7 @@ describe('HistoryScreen 測試', () => {
                 history: [],
             });
 
-            const { getByTestId } = render(<HistoryScreen />);
+            const { getByTestId } = render(<HistoryScreen navigation={mockNavigation} />);
             expect(getByTestId('loading-indicator')).toBeTruthy();
         });
 
@@ -160,7 +162,7 @@ describe('HistoryScreen 測試', () => {
                 history: [],
             });
 
-            const { getByText } = render(<HistoryScreen />);
+            const { getByText } = render(<HistoryScreen navigation={mockNavigation} />);
             expect(getByText(/打席歷史紀錄/)).toBeTruthy();
             expect(getByText('尚無歷史紀錄')).toBeTruthy();
         });
@@ -177,7 +179,7 @@ describe('HistoryScreen 測試', () => {
                 }],
             });
 
-            const { getByText, getByTestId } = render(<HistoryScreen />);
+            const { getByText, getByTestId } = render(<HistoryScreen navigation={mockNavigation} />);
             expect(getByText('打席 1')).toBeTruthy();
             expect(getByTestId('list-item-description')).toBeTruthy();
             expect(getByTestId('list-item-description').props.children).toContain('2026-01-28');
@@ -198,80 +200,26 @@ describe('HistoryScreen 測試', () => {
                 }],
             });
 
-            const { getByText } = render(<HistoryScreen />);
+            const { getByText } = render(<HistoryScreen navigation={mockNavigation} />);
             expect(getByText('打席結果：三振')).toBeTruthy();
         });
     });
 
     describe('【Interaction】', () => {
-        it('點擊打席紀錄卡片', () => {
+        it('點擊打席紀錄卡片會導航至 HistoryDetail', () => {
             const mockItem = { id: '1', atBatLabel: '打擊' };
             useHistoryData.mockReturnValue({
                 loading: false,
                 history: [mockItem],
             });
 
-            const { getByTestId, getByText } = render(<HistoryScreen />);
-
-            // Initial state: modal visible is false, but our mock modal renders its container
-            expect(getByTestId('history-modal')).toBeTruthy();
+            const { getByTestId, getByText } = render(<HistoryScreen navigation={mockNavigation} />);
 
             // Click card
             fireEvent.press(getByTestId('mock-card'));
 
-            // Now "Delete" button from modal should be visible
-            expect(getByText('Delete')).toBeTruthy();
+            expect(mockNavigate).toHaveBeenCalledWith('HistoryDetail', { record: mockItem });
         });
 
-        it('關閉詳情 Modal', () => {
-            useHistoryData.mockReturnValue({
-                loading: false,
-                history: [{ id: '1' }],
-            });
-
-            const { getByTestId, getByText, queryByText } = render(<HistoryScreen />);
-
-            // Open modal
-            fireEvent.press(getByTestId('mock-card'));
-            expect(getByText('Close')).toBeTruthy();
-
-            // Close modal
-            fireEvent.press(getByText('Close'));
-            expect(queryByText('Close')).toBeNull();
-        });
-
-        it('刪除打席紀錄', async () => {
-            useHistoryData.mockReturnValue({
-                loading: false,
-                history: [{ id: '1' }],
-            });
-
-            const { getByTestId, getByText } = render(<HistoryScreen />);
-
-            // Open modal
-            fireEvent.press(getByTestId('mock-card'));
-
-            // Press delete in modal
-            fireEvent.press(getByText('Delete'));
-
-            expect(deleteAtBatSummary).toHaveBeenCalledWith('doc123');
-        });
-
-        it('更新打席球數紀錄', async () => {
-            useHistoryData.mockReturnValue({
-                loading: false,
-                history: [{ id: '1' }],
-            });
-
-            const { getByTestId, getByText } = render(<HistoryScreen />);
-
-            // Open modal
-            fireEvent.press(getByTestId('mock-card'));
-
-            // Press update in modal
-            fireEvent.press(getByText('Update'));
-
-            expect(updateAtBatSummaryPitches).toHaveBeenCalledWith('doc456', []);
-        });
     });
 });

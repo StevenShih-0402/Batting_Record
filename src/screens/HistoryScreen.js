@@ -1,7 +1,4 @@
-// src/screens/HistoryScreen.js
-// 讀取彙整後打席數據的介面
-
-import React, { useState } from 'react';
+import React from 'react';
 import { View, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, useTheme, Card, List, ActivityIndicator, Badge } from 'react-native-paper';
@@ -17,9 +14,6 @@ import { useHistoryFilter } from '../hooks/ui/useHistoryFilter';
 import { useAuth } from '../hooks/auth/useAuth';
 import { usePreferences } from '../context/PreferencesContext';
 
-// 導入組件
-import HistoryFilterModal from '../components/modals/HistoryFilterModal';
-
 /**
  * 歷史紀錄頁面，顯示已彙整的打席列表。
  * 點擊卡片時導航到 HistoryDetailScreen 查看詳情。
@@ -32,7 +26,6 @@ const HistoryScreen = ({ navigation }) => {
     const { customSummaryFields } = usePreferences();
 
     const { filters, isFilterActive, filteredHistory, applyFilters, clearFilters } = useHistoryFilter(history);
-    const [isFilterModalVisible, setFilterModalVisible] = useState(false);
 
     // 點擊卡片，導航到詳情頁
     const handleCardPress = (item) => {
@@ -80,14 +73,6 @@ const HistoryScreen = ({ navigation }) => {
                 </Text>
             </View>
 
-            <HistoryFilterModal
-                visible={isFilterModalVisible}
-                onDismiss={() => setFilterModalVisible(false)}
-                onApply={applyFilters}
-                onClear={clearFilters}
-                initialFilters={filters}
-            />
-
             <FlatList
                 data={filteredHistory}
                 keyExtractor={(item) => item.id}
@@ -132,7 +117,11 @@ const HistoryScreen = ({ navigation }) => {
             {/* 懸浮篩選按鈕 */}
             <TouchableOpacity
                 style={[styles.filterFab, { backgroundColor: isFilterActive ? theme.colors.primaryContainer : theme.colors.primary, bottom: insets.bottom - 35 }]}
-                onPress={() => setFilterModalVisible(true)}
+                onPress={() => navigation.navigate('HistoryFilter', {
+                    onApply: applyFilters,
+                    onClear: clearFilters,
+                    initialFilters: filters
+                })}
             >
                 <MaterialCommunityIcons
                     name={isFilterActive ? "filter-check" : "filter-variant"}

@@ -8,9 +8,7 @@ import { TouchableRipple, Text, useTheme, Button, ActivityIndicator } from 'reac
 import { Feather as Icon } from '@expo/vector-icons';
 import { getColorByResult } from '../constants/Colors';
 
-// 導入 Modal 組件
-import PitchEditModal from '../components/modals/PitchEditModal';
-import EndAtBatModal from '../components/modals/EndAtBatModal';
+
 
 // 導入 Hook
 import useAtBatRecords from '../hooks/useAtBatRecords';
@@ -34,11 +32,38 @@ const BattingListScreen = ({ navigation }) => {
         handleSaveSummary: onSaveSummary
     } = useAtBatRecords();
 
-    // Modal 狀態管理
-    const [editModalVisible, setEditModalVisible] = useState(false);
-    const [endModalVisible, setEndModalVisible] = useState(false);
-    const [selectedRecord, setSelectedRecord] = useState(null);
-    const [isSaving, setIsSaving] = useState(false);
+    // 處理編輯點擊 - 導航至 PitchEdit
+    const handleEditPress = (record) => {
+        navigation.navigate('PitchEdit', {
+            record,
+            onSave: async (updatedData) => {
+                if (onUpdatePitch) {
+                    await onUpdatePitch(record.id, updatedData);
+                }
+            },
+            onDelete: async () => {
+                if (onDeletePitch) {
+                    await onDeletePitch(record.id);
+                }
+            }
+        });
+    };
+
+    // 處理開啟儲存彙整 - 導航至 EndAtBat
+    const handleOpenEndModal = () => {
+        navigation.navigate('EndAtBat', {
+            atBatRecords: records,
+            onSave: async (summaryData) => {
+                try {
+                    if (onSaveSummary) {
+                        await onSaveSummary(summaryData);
+                    }
+                } catch (error) {
+                    console.error('儲存彙整失敗:', error);
+                }
+            }
+        });
+    };
 
     // 渲染空狀態
     if (records.length === 0) {
@@ -52,66 +77,6 @@ const BattingListScreen = ({ navigation }) => {
             </SafeAreaView>
         );
     }
-
-    // 處理編輯點擊 - 開啟 Modal
-    const handleEditPress = (record) => {
-        setSelectedRecord(record);
-        setEditModalVisible(true);
-    };
-
-    // 處理編輯 Modal 關閉
-    const handleEditModalClose = () => {
-        setEditModalVisible(false);
-        setSelectedRecord(null);
-    };
-
-    // 處理更新投球 - 需傳遞 (id, updatedData) 給 onUpdatePitch
-    const handleUpdatePitch = async (updatedData) => {
-        setIsSaving(true);
-        try {
-            if (onUpdatePitch && selectedRecord) {
-                await onUpdatePitch(selectedRecord.id, updatedData);
-            }
-            handleEditModalClose();
-            // 返回上一頁讓資料刷新
-            navigation.goBack();
-        } finally {
-            setIsSaving(false);
-        }
-    };
-
-    // 處理刪除投球
-    const handleDeletePitch = async (recordId) => {
-        setIsSaving(true);
-        try {
-            if (onDeletePitch) {
-                await onDeletePitch(recordId);
-            }
-            handleEditModalClose();
-            // 返回上一頁讓資料刷新
-            navigation.goBack();
-        } finally {
-            setIsSaving(false);
-        }
-    };
-
-    // 處理開啟儲存彙整 Modal
-    const handleOpenEndModal = () => {
-        setEndModalVisible(true);
-    };
-
-    // 處理儲存彙整完成
-    const handleSaveSummaryComplete = async (summaryData) => {
-        try {
-            if (onSaveSummary) {
-                await onSaveSummary(summaryData);
-            }
-            setEndModalVisible(false);
-            navigation.goBack();
-        } catch (error) {
-            console.error('儲存彙整失敗:', error);
-        }
-    };
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['bottom']}>
@@ -183,24 +148,6 @@ const BattingListScreen = ({ navigation }) => {
                     );
                 })}
             </ScrollView>
-
-            {/* PitchEditModal - 編輯單球紀錄 */}
-            <PitchEditModal
-                isVisible={editModalVisible}
-                record={selectedRecord}
-                onClose={handleEditModalClose}
-                onSave={handleUpdatePitch}
-                onDelete={handleDeletePitch}
-                isSaving={isSaving}
-            />
-
-            {/* EndAtBatModal - 儲存彙整 */}
-            <EndAtBatModal
-                isVisible={endModalVisible}
-                onClose={() => setEndModalVisible(false)}
-                onSave={handleSaveSummaryComplete}
-                atBatRecords={records}
-            />
         </SafeAreaView>
     );
 };

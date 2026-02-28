@@ -14,8 +14,7 @@ import { deleteAtBatSummary, updateAtBatSummaryPitches } from '../services/atBat
 import PitchGrid from '../components/common/PitchGrid';
 import PitchHistoryDots from '../components/PitchHistoryDots';
 
-// 沿用現有的編輯 Modal
-import PitchEditModal from '../components/modals/PitchEditModal';
+
 
 /**
  * 打席詳細資料的 Screen，顯示九宮格與逐球詳細數據。
@@ -29,10 +28,6 @@ const HistoryDetailScreen = ({ navigation, route }) => {
     const [localPitches, setLocalPitches] = useState([]);
     const [gridLayout, setGridLayout] = useState(null);
 
-    // 編輯 Modal 狀態
-    const [editModalVisible, setEditModalVisible] = useState(false);
-    const [selectedPitchIndex, setSelectedPitchIndex] = useState(null);
-    const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
         if (record && record.pitchRecords) {
@@ -86,46 +81,24 @@ const HistoryDetailScreen = ({ navigation, route }) => {
         ]);
     };
 
-    // 處理編輯單球 - 開啟 Modal
+    // 處理編輯單球 - 導航至 PitchEdit
     const handleEditPitch = (index) => {
-        setSelectedPitchIndex(index);
-        setEditModalVisible(true);
-    };
-
-    // 處理編輯 Modal 關閉
-    const handleEditModalClose = () => {
-        setEditModalVisible(false);
-        setSelectedPitchIndex(null);
-    };
-
-    // 處理編輯儲存
-    const handleSaveEditedPitch = async (updatedData) => {
-        if (selectedPitchIndex === null) return;
-
-        setIsSaving(true);
-        try {
-            const newPitches = [...localPitches];
-            // 更新選中的球資料
-            newPitches[selectedPitchIndex] = {
-                ...newPitches[selectedPitchIndex],
-                ...updatedData,
-            };
-            setLocalPitches(newPitches);
-            await updateAtBatSummaryPitches(record.id, newPitches);
-            handleEditModalClose();
-        } finally {
-            setIsSaving(false);
-        }
-    };
-
-    // 處理從 Modal 中刪除單球
-    const handleDeleteFromModal = async () => {
-        if (selectedPitchIndex === null) return;
-
-        // 關閉 Modal 後執行刪除
-        const indexToDelete = selectedPitchIndex;
-        handleEditModalClose();
-        handleDeleteSinglePitch(indexToDelete);
+        const pitchToEdit = localPitches[index];
+        navigation.navigate('PitchEdit', {
+            record: pitchToEdit,
+            onSave: async (updatedData) => {
+                const newPitches = [...localPitches];
+                newPitches[index] = {
+                    ...newPitches[index],
+                    ...updatedData,
+                };
+                setLocalPitches(newPitches);
+                await updateAtBatSummaryPitches(record.id, newPitches);
+            },
+            onDelete: () => {
+                handleDeleteSinglePitch(index);
+            }
+        });
     };
 
     /**
@@ -256,15 +229,6 @@ const HistoryDetailScreen = ({ navigation, route }) => {
                 </Button>
             </View>
 
-            {/* 編輯單球 Modal - 沿用 PitchEditModal */}
-            <PitchEditModal
-                isVisible={editModalVisible}
-                record={selectedPitchIndex !== null ? localPitches[selectedPitchIndex] : null}
-                onClose={handleEditModalClose}
-                onSave={handleSaveEditedPitch}
-                onDelete={handleDeleteFromModal}
-                isSaving={isSaving}
-            />
         </SafeAreaView>
     );
 };
